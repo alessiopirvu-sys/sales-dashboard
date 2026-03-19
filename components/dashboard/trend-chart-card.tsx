@@ -14,12 +14,12 @@ export function TrendChartCard({ trend }: TrendChartCardProps) {
   return (
     <Card className="h-full overflow-hidden rounded-[2.35rem]">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="text-[1.4rem]">Trend</CardTitle>
-        <div className="surface-pill rounded-full border border-white/80 px-4 py-2 text-sm font-medium text-primary">
+        <CardTitle className="text-[1.15rem] sm:text-[1.4rem]">Trend</CardTitle>
+        <div className="surface-pill rounded-full border border-white/80 px-3 py-1.5 text-xs font-medium text-primary sm:px-4 sm:py-2 sm:text-sm">
           Live
         </div>
       </CardHeader>
-      <CardContent className="relative h-[360px] p-4 pt-0 md:h-[364px] md:p-6 md:pt-0">
+      <CardContent className="relative h-[280px] p-3 pt-0 sm:h-[320px] sm:p-4 sm:pt-0 md:h-[364px] md:p-6 md:pt-0">
         <div className="grid-fade pointer-events-none absolute inset-6 rounded-[1.8rem] opacity-30" />
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={trend}>

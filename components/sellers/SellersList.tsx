@@ -45,17 +45,17 @@ export function SellersList({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex min-h-0 flex-1 flex-col">
+      <CardContent className="flex min-h-0 flex-1 flex-col p-5 pt-0 sm:p-7 sm:pt-0">
         {isLoading ? (
           <div className="rounded-[1.45rem] bg-slate-50 px-4 py-5 text-sm text-slate-500">
             Caricamento venditori...
           </div>
         ) : sellers.length > 0 ? (
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2 [scrollbar-width:thin]">
+          <div className="subtle-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto pr-2 [scrollbar-width:thin]">
             {sellers.map((seller) => (
               <div
                 key={seller.id}
-                className="rounded-[1.6rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(248,250,255,0.96),rgba(243,247,252,0.94))] p-4 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.4)]"
+                className="rounded-[1.45rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(248,250,255,0.96),rgba(243,247,252,0.94))] p-3.5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.4)] sm:rounded-[1.6rem] sm:p-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">

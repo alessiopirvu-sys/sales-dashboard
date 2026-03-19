@@ -42,7 +42,6 @@ export function DashboardPage() {
   const [activeRankingMetric, setActiveRankingMetric] = useState<RankingMetricKey>("revenue");
   const [venditoriCardHeight, setVenditoriCardHeight] = useState<number | undefined>(undefined);
   const leaderboardRef = useRef<HTMLDivElement | null>(null);
-  const sellersCardRef = useRef<HTMLDivElement | null>(null);
 
   const fetchData = async (nextFilters: DashboardFilters, refresh = false) => {
     setError(null);
@@ -166,11 +165,9 @@ export function DashboardPage() {
     }
 
     const updateHeight = () => {
-      const nextHeight = Math.round(element.getBoundingClientRect().height);
+      const shouldSync = window.innerWidth >= 1280;
+      const nextHeight = shouldSync ? Math.round(element.getBoundingClientRect().height) : undefined;
       setVenditoriCardHeight(nextHeight);
-      console.log("[dashboard-height-sync]", {
-        venditoriCardHeight: nextHeight
-      });
     };
 
     updateHeight();
@@ -183,23 +180,13 @@ export function DashboardPage() {
     return () => observer.disconnect();
   }, [sortedRanking.length, sellers.length, activeRankingMetric]);
 
-  useLayoutEffect(() => {
-    if (!venditoriCardHeight || !sellersCardRef.current) {
-      return;
-    }
-
-    console.log("[dashboard-height-sync]", {
-      venditoriCardHeight,
-      rightCardReceivedInlineHeight: sellersCardRef.current.style.height
-    });
-  }, [venditoriCardHeight]);
   const handleRefresh = () => void fetchData(filters, true);
   const handleExport = () => {};
 
   return (
-    <main className="min-h-screen bg-transparent px-4 py-6 md:px-8 md:py-8 lg:px-10 lg:py-10">
+    <main className="min-h-screen bg-transparent px-3 py-4 sm:px-4 sm:py-6 md:px-8 md:py-8 lg:px-10 lg:py-10">
       <div className="mx-auto max-w-[1480px]">
-        <section className="relative overflow-hidden rounded-[2.8rem] border border-white/85 bg-white/76 p-4 shadow-float backdrop-blur-xl md:p-6">
+        <section className="relative overflow-hidden rounded-[2rem] border border-white/85 bg-white/76 p-3 shadow-float backdrop-blur-xl sm:rounded-[2.4rem] sm:p-4 md:rounded-[2.8rem] md:p-6">
           <div className="pointer-events-none absolute inset-0 bg-hero opacity-95" />
           <div className="relative z-10 space-y-4">
             <TopNavbar />
@@ -276,11 +263,10 @@ export function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="grid items-stretch gap-6 xl:grid-cols-12">
-                  <div className="xl:col-span-8">
+                <div className="grid gap-6 xl:grid-cols-12 xl:items-stretch">
+                  <div className="min-w-0 xl:col-span-8">
                     <LeaderboardTable
                       ref={leaderboardRef}
-                      className="ring-2 ring-blue-500"
                       rows={sortedRanking}
                       activeMetric={activeRankingMetric}
                       onMetricChange={setActiveRankingMetric}
@@ -288,8 +274,7 @@ export function DashboardPage() {
                   </div>
                   <div className="h-full min-h-0 overflow-hidden xl:col-span-4">
                     <div
-                      ref={sellersCardRef}
-                      className="surface-card flex flex-col overflow-hidden rounded-[2.2rem] ring-2 ring-red-500"
+                      className="surface-card flex flex-col overflow-hidden rounded-[2.2rem]"
                       style={venditoriCardHeight ? { height: `${venditoriCardHeight}px` } : undefined}
                     >
                       <SellersList

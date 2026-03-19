@@ -76,7 +76,7 @@ export function InsightCard({
   return (
     <Card className="flex h-full flex-col overflow-hidden rounded-[2.2rem]">
       <CardHeader className="shrink-0 pb-3">
-        <CardTitle className="text-[1.25rem]">Performance</CardTitle>
+        <CardTitle className="text-[1.1rem] sm:text-[1.25rem]">Performance</CardTitle>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col justify-between gap-3">
         {metrics.map((metric) => {
@@ -85,13 +85,13 @@ export function InsightCard({
           return (
             <div
               key={metric.label}
-              className="flex min-h-0 flex-1 flex-col justify-center rounded-[1.55rem] bg-slate-50/95 p-3.5"
+              className="flex min-h-0 flex-1 flex-col justify-center rounded-[1.55rem] bg-slate-50/95 p-3 sm:p-3.5"
             >
               <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
                 <Icon className="h-4 w-4 text-primary" />
                 {metric.label}
               </div>
-              <div className="mt-2.5 text-[1.5rem] font-semibold tracking-[-0.04em] text-slate-950 md:text-[1.6rem]">
+              <div className="mt-2.5 text-[1.35rem] font-semibold tracking-[-0.04em] text-slate-950 sm:text-[1.5rem] md:text-[1.6rem]">
                 {metric.currentValue}
               </div>
               <TrendDelta delta={metric.delta} isPercentage={metric.isPercentage} />

@@ -35,22 +35,22 @@ export function PodiumCard({ ranking, activeMetric }: PodiumCardProps) {
     <Card className="h-full rounded-[2.2rem] border border-white/85 bg-[linear-gradient(180deg,#ffffff_0%,#f7faff_100%)]">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-[1.25rem]">Top performers</CardTitle>
-          <div className="flex h-10 w-10 items-center justify-center rounded-[1rem] bg-primary/10 text-primary">
+          <CardTitle className="text-[1.1rem] sm:text-[1.25rem]">Top performers</CardTitle>
+          <div className="flex h-9 w-9 items-center justify-center rounded-[1rem] bg-primary/10 text-primary sm:h-10 sm:w-10">
             <Trophy className="h-4 w-4" />
           </div>
         </div>
       </CardHeader>
-      <CardContent className="h-[360px] md:h-[364px]">
+      <CardContent className="h-auto md:h-[364px]">
         {ranking.length > 0 ? (
-          <div className="subtle-scrollbar flex h-full flex-col gap-3 overflow-y-auto pr-1">
+          <div className="subtle-scrollbar flex flex-col gap-3 md:h-full md:overflow-y-auto md:pr-1">
             {ranking.map((row, index) => {
               const isTopThree = index < 3;
 
               return (
                 <div
                   key={row.seller}
-                  className="flex items-center justify-between rounded-[1.55rem] border border-slate-100 bg-white px-4 py-3 shadow-[0_18px_34px_-32px_rgba(46,87,173,0.28)]"
+                  className="flex items-center justify-between rounded-[1.4rem] border border-slate-100 bg-white px-3.5 py-3 shadow-[0_18px_34px_-32px_rgba(46,87,173,0.28)] sm:rounded-[1.55rem] sm:px-4"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <div
@@ -65,7 +65,7 @@ export function PodiumCard({ ranking, activeMetric }: PodiumCardProps) {
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-900">{row.seller}</p>
-                      <p className="mt-1 text-xs text-slate-500">{metric.tableLabel}</p>
+                      <p className="mt-1 text-[11px] text-slate-500 sm:text-xs">{metric.tableLabel}</p>
                     </div>
                   </div>
 

@@ -18,10 +18,10 @@ export function AppHeader({
   onAddSeller
 }: AppHeaderProps) {
   return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="space-y-1">
         <p className="text-sm font-medium text-primary">{title}</p>
-        <h1 className="font-display text-[1.4rem] font-semibold tracking-[-0.04em] text-slate-900 md:text-[1.75rem]">
+        <h1 className="font-display text-[1.2rem] font-semibold tracking-[-0.04em] text-slate-900 sm:text-[1.4rem] md:text-[1.75rem]">
           {subtitle}
         </h1>
         <div className="flex items-center gap-2 text-xs text-slate-500 md:text-sm">
@@ -30,12 +30,12 @@ export function AppHeader({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-3 lg:flex-nowrap">
-        <Button variant="secondary" onClick={onAddSeller} className="h-11 rounded-full px-5">
+      <div className="flex flex-wrap items-stretch gap-3 sm:items-center lg:justify-end lg:flex-nowrap">
+        <Button variant="secondary" onClick={onAddSeller} className="h-11 rounded-full px-5 max-sm:w-full">
           <Plus className="mr-2 h-4 w-4" />
           Aggiungi venditore
         </Button>
-        <Button variant="secondary" onClick={onExport} className="h-11 rounded-full px-5">
+        <Button variant="secondary" onClick={onExport} className="h-11 rounded-full px-5 max-sm:w-full">
           <ArrowDownToLine className="mr-2 h-4 w-4" />
           Export
         </Button>
