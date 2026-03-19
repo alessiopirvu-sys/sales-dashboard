@@ -1,0 +1,51 @@
+import { SheetColumnMapping } from "@/lib/types";
+
+export const REQUIRED_SHEET_HEADERS = [
+  "GIORNO",
+  "TIPO",
+  "N° CHIAMATE FR",
+  "NON INTERESSATI",
+  "NR",
+  "APP PRESI FR",
+  "SVOLTI FR",
+  "NO SHOW FR",
+  "CHIUSI FR",
+  "SOLDI FR",
+  "CONTATTI FR",
+  "D2D",
+  "APP D2D",
+  "SVOLTI D2D",
+  "NO SHOW D2D",
+  "CHIUSI D2D",
+  "SOLDI D2D",
+  "UFFICIO",
+  "UFFICIO SVOLTI",
+  "NO SHOW UFFICIO",
+  "UFFICIO CHIUSI",
+  "UFFICIO SOLDI"
+] as const;
+
+export const SALES_SHEET_COLUMNS: SheetColumnMapping = {
+  date: "GIORNO",
+  type: "TIPO",
+  callsFr: "N° CHIAMATE FR",
+  notInterestedFr: "NON INTERESSATI",
+  nrFr: "NR",
+  appointmentsBookedFr: "APP PRESI FR",
+  appointmentsDoneFr: "SVOLTI FR",
+  noShowFr: "NO SHOW FR",
+  closedFr: "CHIUSI FR",
+  revenueFr: "SOLDI FR",
+  contactsFr: "CONTATTI FR",
+  d2dBase: "D2D",
+  appointmentsBookedD2d: "APP D2D",
+  appointmentsDoneD2d: "SVOLTI D2D",
+  noShowD2d: "NO SHOW D2D",
+  closedD2d: "CHIUSI D2D",
+  revenueD2d: "SOLDI D2D",
+  officeBase: "UFFICIO",
+  appointmentsDoneOffice: "UFFICIO SVOLTI",
+  noShowOffice: "NO SHOW UFFICIO",
+  closedOffice: "UFFICIO CHIUSI",
+  revenueOffice: "UFFICIO SOLDI"
+};
