@@ -9,8 +9,8 @@ export type RankingMetricKey =
   | "calls"
   | "appointmentsBooked"
   | "appointmentsDone"
-  | "dealsClosed"
-  | "revenue"
+  | "dealsClosedTotal"
+  | "revenueTotal"
   | "showUpRate"
   | "closingRate";
 
@@ -26,49 +26,49 @@ export const rankingMetricOptions: RankingMetricConfig[] = [
   {
     key: "calls",
     label: "Chiamate",
-    tableLabel: "Chiamate",
+    tableLabel: "Chiamate FR",
     format: formatCompactNumber,
     getValue: (row) => row.calls
   },
   {
     key: "appointmentsBooked",
     label: "App presi",
-    tableLabel: "App presi",
+    tableLabel: "App presi FR",
     format: formatCompactNumber,
     getValue: (row) => row.appointmentsBooked
   },
   {
     key: "appointmentsDone",
     label: "Svolti",
-    tableLabel: "Svolti",
+    tableLabel: "Svolti FR",
     format: formatCompactNumber,
     getValue: (row) => row.appointmentsDone
   },
   {
-    key: "dealsClosed",
-    label: "Chiusi",
-    tableLabel: "Chiusi",
+    key: "dealsClosedTotal",
+    label: "Chiusi totali",
+    tableLabel: "Chiusi totali",
     format: formatCompactNumber,
-    getValue: (row) => row.dealsClosed
+    getValue: (row) => row.dealsClosedTotal
   },
   {
-    key: "revenue",
-    label: "Fatturato €",
-    tableLabel: "Fatturato",
+    key: "revenueTotal",
+    label: "Fatturato totale",
+    tableLabel: "Fatturato totale",
     format: formatCurrency,
-    getValue: (row) => row.revenue
+    getValue: (row) => row.revenueTotal
   },
   {
     key: "showUpRate",
     label: "% Show-up",
-    tableLabel: "Show-up %",
+    tableLabel: "Show-up % FR",
     format: formatPercentage,
     getValue: (row) => row.showUpRate
   },
   {
     key: "closingRate",
     label: "% Closing",
-    tableLabel: "Closing %",
+    tableLabel: "Closing % FR",
     format: formatPercentage,
     getValue: (row) => row.closingRate
   }

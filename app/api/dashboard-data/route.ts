@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
           kpis: calculateSalesKpis(aggregated)
         };
       })
-      .sort((left, right) => right.summary.revenue - left.summary.revenue);
+      .sort((left, right) => right.summary.revenueTotal - left.summary.revenueTotal);
 
     const firstDebug = parserDebug[0];
 
@@ -129,13 +129,13 @@ export async function GET(request: NextRequest) {
         trend: buildTrendSeries(currentRows),
         comparison: {
           current: {
-            revenue: summary.revenue,
-            dealsClosed: summary.dealsClosed,
+            revenueTotal: summary.revenueTotal,
+            dealsClosedTotal: summary.dealsClosedTotal,
             closingRate: summary.closingRate
           },
           previous: {
-            revenue: previousSummary.revenue,
-            dealsClosed: previousSummary.dealsClosed,
+            revenueTotal: previousSummary.revenueTotal,
+            dealsClosedTotal: previousSummary.dealsClosedTotal,
             closingRate: previousSummary.closingRate
           }
         },

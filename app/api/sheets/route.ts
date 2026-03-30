@@ -46,7 +46,11 @@ const sheetSource: SheetSourceConfig = {
     appointmentsDoneOffice: "UFFICIO SVOLTI",
     noShowOffice: "NO SHOW UFFICIO",
     closedOffice: "UFFICIO CHIUSI",
-    revenueOffice: "UFFICIO SOLDI"
+    revenueOffice: "UFFICIO SOLDI",
+    rifissatoOffice: "RIFISSATO",
+    referenze: "REFERENZE",
+    closedReferenze: "CHIUSI REFERENZE",
+    revenueReferenze: "SOLDI REFERENZE"
   }
 };
 

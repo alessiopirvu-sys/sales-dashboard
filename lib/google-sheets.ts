@@ -100,7 +100,11 @@ export async function getAllGoogleSheetsRows(): Promise<{
             appointmentsDoneOffice: "appointments_done_office",
             noShowOffice: "no_show_office",
             closedOffice: "closed_office",
-            revenueOffice: "revenue_office"
+            revenueOffice: "revenue_office",
+            rifissatoOffice: "rifissato_office",
+            referenze: "referenze",
+            closedReferenze: "closed_referenze",
+            revenueReferenze: "revenue_referenze"
           }
         }
       ];

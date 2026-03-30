@@ -12,10 +12,10 @@ type ComparisonMetric = {
 };
 
 type InsightCardProps = {
-  revenue: number;
-  previousRevenue: number;
-  dealsClosed: number;
-  previousDealsClosed: number;
+  revenueTotal: number;
+  previousRevenueTotal: number;
+  dealsClosedTotal: number;
+  previousDealsClosedTotal: number;
   closingRate: number;
   previousClosingRate: number;
 };
@@ -44,28 +44,28 @@ function TrendDelta({ delta, isPercentage = false }: { delta: number; isPercenta
 }
 
 export function InsightCard({
-  revenue,
-  previousRevenue,
-  dealsClosed,
-  previousDealsClosed,
+  revenueTotal,
+  previousRevenueTotal,
+  dealsClosedTotal,
+  previousDealsClosedTotal,
   closingRate,
   previousClosingRate
 }: InsightCardProps) {
   const metrics: ComparisonMetric[] = [
     {
-      label: "Fatturato",
-      currentValue: formatCurrency(revenue),
-      delta: getDelta(revenue, previousRevenue),
+      label: "Fatturato totale",
+      currentValue: formatCurrency(revenueTotal),
+      delta: getDelta(revenueTotal, previousRevenueTotal),
       icon: Euro
     },
     {
-      label: "Chiusi",
-      currentValue: String(dealsClosed),
-      delta: getDelta(dealsClosed, previousDealsClosed),
+      label: "Chiusi totali",
+      currentValue: String(dealsClosedTotal),
+      delta: getDelta(dealsClosedTotal, previousDealsClosedTotal),
       icon: Goal
     },
     {
-      label: "Closing su svolti",
+      label: "Closing su svolti FR",
       currentValue: formatPercentage(closingRate),
       delta: closingRate - previousClosingRate,
       icon: Target,

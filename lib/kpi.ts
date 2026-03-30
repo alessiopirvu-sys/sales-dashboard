@@ -48,6 +48,10 @@ export function aggregateSalesRowsByPeriod(
       accumulator.noShowOffice += row.noShowOffice;
       accumulator.closedOffice += row.closedOffice;
       accumulator.revenueOffice += row.revenueOffice;
+      accumulator.rifissatoOffice += row.rifissatoOffice;
+      accumulator.referenze += row.referenze;
+      accumulator.closedReferenze += row.closedReferenze;
+      accumulator.revenueReferenze += row.revenueReferenze;
       accumulator.calls += row.calls;
       accumulator.appointmentsBooked += row.appointmentsBooked;
       accumulator.appointmentsDone += row.appointmentsDone;
@@ -77,6 +81,10 @@ export function aggregateSalesRowsByPeriod(
       noShowOffice: 0,
       closedOffice: 0,
       revenueOffice: 0,
+      rifissatoOffice: 0,
+      referenze: 0,
+      closedReferenze: 0,
+      revenueReferenze: 0,
       calls: 0,
       appointmentsBooked: 0,
       appointmentsDone: 0,
@@ -115,6 +123,15 @@ export function calculateSalesKpis(aggregated: AggregatedSalesPeriod): Calculate
     office: {
       showUpRateOffice: safeDivide(aggregated.appointmentsDoneOffice, aggregated.officeBase),
       closingRateOffice: safeDivide(aggregated.closedOffice, aggregated.appointmentsDoneOffice)
+    },
+    referenze: {
+      conversionRateReferenze: safeDivide(aggregated.closedReferenze, aggregated.referenze),
+      averageValueReferenze: safeDivide(aggregated.revenueReferenze, aggregated.referenze),
+      averageClosedValueReferenze: safeDivide(aggregated.revenueReferenze, aggregated.closedReferenze),
+      incidenzaReferenze: safeDivide(
+        aggregated.revenueReferenze,
+        aggregated.revenueFr + aggregated.revenueReferenze
+      )
     }
   };
 }
@@ -127,6 +144,15 @@ export function calculateSummaryMetrics(rows: NormalizedSalesRow[]): SummaryMetr
       accumulator.appointmentsDone += row.appointmentsDone;
       accumulator.dealsClosed += row.dealsClosed;
       accumulator.revenue += row.revenue;
+      accumulator.referenze += row.referenze;
+      accumulator.closedReferenze += row.closedReferenze;
+      accumulator.revenueReferenze += row.revenueReferenze;
+      accumulator.officeBase += row.officeBase;
+      accumulator.appointmentsDoneOffice += row.appointmentsDoneOffice;
+      accumulator.noShowOffice += row.noShowOffice;
+      accumulator.closedOffice += row.closedOffice;
+      accumulator.revenueOffice += row.revenueOffice;
+      accumulator.rifissatoOffice += row.rifissatoOffice;
       return accumulator;
     },
     {
@@ -134,17 +160,57 @@ export function calculateSummaryMetrics(rows: NormalizedSalesRow[]): SummaryMetr
       appointmentsBooked: 0,
       appointmentsDone: 0,
       dealsClosed: 0,
-      revenue: 0
+      revenue: 0,
+      referenze: 0,
+      closedReferenze: 0,
+      revenueReferenze: 0,
+      officeBase: 0,
+      appointmentsDoneOffice: 0,
+      noShowOffice: 0,
+      closedOffice: 0,
+      revenueOffice: 0,
+      rifissatoOffice: 0
     }
   );
 
+  const dealsClosedTotal = totals.dealsClosed + totals.closedReferenze + totals.closedOffice;
+  const revenueTotal = totals.revenue + totals.revenueReferenze + totals.revenueOffice;
+
   return {
-    ...totals,
+    /* ── Funnel freddi (FR only) ── */
+    calls: totals.calls,
+    appointmentsBooked: totals.appointmentsBooked,
+    appointmentsDone: totals.appointmentsDone,
+    dealsClosed: totals.dealsClosed,
+    revenue: totals.revenue,
     averageTicket: safeDivide(totals.revenue, totals.dealsClosed),
     showUpRate: safeDivide(totals.appointmentsDone, totals.appointmentsBooked) * 100,
-    // Aggregate closing rate stays aligned with the per-channel rule: closed / done.
+    // Closing rate stays aligned with the per-channel rule: chiusiFR / svoltiFR.
     closingRate: safeDivide(totals.dealsClosed, totals.appointmentsDone) * 100,
-    conversionRate: safeDivide(totals.dealsClosed, totals.calls) * 100
+    conversionRate: safeDivide(totals.dealsClosed, totals.calls) * 100,
+    /* ── Referenze ── */
+    referenze: totals.referenze,
+    closedReferenze: totals.closedReferenze,
+    revenueReferenze: totals.revenueReferenze,
+    conversionRateReferenze: safeDivide(totals.closedReferenze, totals.referenze) * 100,
+    averageValueReferenze: safeDivide(totals.revenueReferenze, totals.referenze),
+    averageTicketReferenze: safeDivide(totals.revenueReferenze, totals.closedReferenze),
+    /* ── Ufficio ── */
+    officeBase: totals.officeBase,
+    appointmentsDoneOffice: totals.appointmentsDoneOffice,
+    noShowOffice: totals.noShowOffice,
+    closedOffice: totals.closedOffice,
+    revenueOffice: totals.revenueOffice,
+    showUpRateOffice: safeDivide(totals.appointmentsDoneOffice, totals.officeBase) * 100,
+    noShowRateOffice: safeDivide(totals.noShowOffice, totals.officeBase) * 100,
+    closingRateOffice: safeDivide(totals.closedOffice, totals.appointmentsDoneOffice) * 100,
+    averageTicketOffice: safeDivide(totals.revenueOffice, totals.closedOffice),
+    rifissatoOffice: totals.rifissatoOffice,
+    recoveryRateOffice: safeDivide(totals.rifissatoOffice, totals.noShowOffice) * 100,
+    /* ── Totali business (FR + Referenze + Ufficio) ── */
+    dealsClosedTotal,
+    revenueTotal,
+    averageTicketTotal: safeDivide(revenueTotal, dealsClosedTotal)
   };
 }
 
@@ -162,10 +228,10 @@ export function buildSellerRanking(rows: NormalizedSalesRow[]): RankingRow[] {
       ...calculateSummaryMetrics(sellerRows)
     }))
     .sort((left, right) => {
-      if (right.revenue !== left.revenue) {
-        return right.revenue - left.revenue;
+      if (right.revenueTotal !== left.revenueTotal) {
+        return right.revenueTotal - left.revenueTotal;
       }
-      return right.dealsClosed - left.dealsClosed;
+      return right.dealsClosedTotal - left.dealsClosedTotal;
     });
 }
 
@@ -175,11 +241,17 @@ export function buildTrendSeries(rows: NormalizedSalesRow[]): TrendPoint[] {
       date: row.date,
       label: row.date.slice(8, 10),
       calls: 0,
-      revenue: 0
+      revenue: 0,
+      revenueFr: 0,
+      revenueReferenze: 0,
+      revenueOffice: 0
     };
 
     current.calls += row.calls;
-    current.revenue += row.revenue;
+    current.revenueFr += row.revenueFr;
+    current.revenueReferenze += row.revenueReferenze;
+    current.revenueOffice += row.revenueOffice;
+    current.revenue = current.revenueFr + current.revenueReferenze + current.revenueOffice;
     accumulator.set(row.date, current);
     return accumulator;
   }, new Map());

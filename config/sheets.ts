@@ -40,7 +40,11 @@ export const sheetSources: SheetSourceConfig[] = [
       noShowOffice:
         process.env.GOOGLE_SHEETS_COL_NO_SHOW_OFFICE_1 || "NO SHOW UFFICIO",
       closedOffice: process.env.GOOGLE_SHEETS_COL_CLOSED_OFFICE_1 || "UFFICIO CHIUSI",
-      revenueOffice: process.env.GOOGLE_SHEETS_COL_REVENUE_OFFICE_1 || "UFFICIO SOLDI"
+      revenueOffice: process.env.GOOGLE_SHEETS_COL_REVENUE_OFFICE_1 || "UFFICIO SOLDI",
+      rifissatoOffice: process.env.GOOGLE_SHEETS_COL_RIFISSATO_OFFICE_1 || "RIFISSATO",
+      referenze: process.env.GOOGLE_SHEETS_COL_REFERENZE_1 || "REFERENZE",
+      closedReferenze: process.env.GOOGLE_SHEETS_COL_CLOSED_REFERENZE_1 || "CHIUSI REFERENZE",
+      revenueReferenze: process.env.GOOGLE_SHEETS_COL_REVENUE_REFERENZE_1 || "SOLDI REFERENZE"
     }
   },
   {
@@ -77,7 +81,11 @@ export const sheetSources: SheetSourceConfig[] = [
       noShowOffice:
         process.env.GOOGLE_SHEETS_COL_NO_SHOW_OFFICE_2 || "NO SHOW UFFICIO",
       closedOffice: process.env.GOOGLE_SHEETS_COL_CLOSED_OFFICE_2 || "UFFICIO CHIUSI",
-      revenueOffice: process.env.GOOGLE_SHEETS_COL_REVENUE_OFFICE_2 || "UFFICIO SOLDI"
+      revenueOffice: process.env.GOOGLE_SHEETS_COL_REVENUE_OFFICE_2 || "UFFICIO SOLDI",
+      rifissatoOffice: process.env.GOOGLE_SHEETS_COL_RIFISSATO_OFFICE_2 || "RIFISSATO",
+      referenze: process.env.GOOGLE_SHEETS_COL_REFERENZE_2 || "REFERENZE",
+      closedReferenze: process.env.GOOGLE_SHEETS_COL_CLOSED_REFERENZE_2 || "CHIUSI REFERENZE",
+      revenueReferenze: process.env.GOOGLE_SHEETS_COL_REVENUE_REFERENZE_2 || "SOLDI REFERENZE"
     }
   }
 ].filter(

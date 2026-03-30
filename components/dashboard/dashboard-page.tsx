@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { LoaderCircle, TrendingUp } from "lucide-react";
@@ -39,8 +39,7 @@ export function DashboardPage() {
   const [editingSeller, setEditingSeller] = useState<SellerRecord | null>(null);
   const [sellers, setSellers] = useState<SellerRecord[]>([]);
   const [isLoadingSellers, setIsLoadingSellers] = useState(false);
-  const [activeRankingMetric, setActiveRankingMetric] = useState<RankingMetricKey>("revenue");
-  const [venditoriCardHeight, setVenditoriCardHeight] = useState<number | undefined>(undefined);
+  const [activeRankingMetric, setActiveRankingMetric] = useState<RankingMetricKey>("revenueTotal");
   const leaderboardRef = useRef<HTMLDivElement | null>(null);
 
   const fetchData = async (nextFilters: DashboardFilters, refresh = false) => {
@@ -150,35 +149,13 @@ export function DashboardPage() {
         return delta;
       }
 
-      if (right.revenue !== left.revenue) {
-        return right.revenue - left.revenue;
+      if (right.revenueTotal !== left.revenueTotal) {
+        return right.revenueTotal - left.revenueTotal;
       }
 
-      return right.dealsClosed - left.dealsClosed;
+      return right.dealsClosedTotal - left.dealsClosedTotal;
     });
   }, [activeRankingMetric, data]);
-
-  useLayoutEffect(() => {
-    const element = leaderboardRef.current;
-    if (!element) {
-      return;
-    }
-
-    const updateHeight = () => {
-      const shouldSync = window.innerWidth >= 1280;
-      const nextHeight = shouldSync ? Math.round(element.getBoundingClientRect().height) : undefined;
-      setVenditoriCardHeight(nextHeight);
-    };
-
-    updateHeight();
-
-    const observer = new ResizeObserver(() => {
-      updateHeight();
-    });
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [sortedRanking.length, sellers.length, activeRankingMetric]);
 
   const handleRefresh = () => void fetchData(filters, true);
   const handleExport = () => {};
@@ -238,10 +215,10 @@ export function DashboardPage() {
                   </div>
                   <div className="xl:col-span-3">
                     <InsightCard
-                      revenue={periodComparison?.current.revenue ?? 0}
-                      previousRevenue={periodComparison?.previous.revenue ?? 0}
-                      dealsClosed={periodComparison?.current.dealsClosed ?? 0}
-                      previousDealsClosed={periodComparison?.previous.dealsClosed ?? 0}
+                      revenueTotal={periodComparison?.current.revenueTotal ?? 0}
+                      previousRevenueTotal={periodComparison?.previous.revenueTotal ?? 0}
+                      dealsClosedTotal={periodComparison?.current.dealsClosedTotal ?? 0}
+                      previousDealsClosedTotal={periodComparison?.previous.dealsClosedTotal ?? 0}
                       closingRate={periodComparison?.current.closingRate ?? 0}
                       previousClosingRate={periodComparison?.previous.closingRate ?? 0}
                     />
@@ -253,30 +230,14 @@ export function DashboardPage() {
                   <div className="xl:col-span-8">
                     <KpiGrid summary={data.summary} />
                   </div>
-                  <div className="xl:col-span-4">
+                  <div className="space-y-5 xl:col-span-4">
                     <ProgressCard
                       showUpRate={data.summary.showUpRate}
                       closingRate={data.summary.closingRate}
                       appointmentsDone={data.summary.appointmentsDone}
                       dealsClosed={data.summary.dealsClosed}
                     />
-                  </div>
-                </div>
-
-                <div className="grid gap-6 xl:grid-cols-12 xl:items-stretch">
-                  <div className="min-w-0 xl:col-span-8">
-                    <LeaderboardTable
-                      ref={leaderboardRef}
-                      rows={sortedRanking}
-                      activeMetric={activeRankingMetric}
-                      onMetricChange={setActiveRankingMetric}
-                    />
-                  </div>
-                  <div className="h-full min-h-0 overflow-hidden xl:col-span-4">
-                    <div
-                      className="surface-card flex flex-col overflow-hidden rounded-[2.2rem]"
-                      style={venditoriCardHeight ? { height: `${venditoriCardHeight}px` } : undefined}
-                    >
+                    <div className="surface-card flex flex-col overflow-hidden rounded-[2.2rem]">
                       <SellersList
                         sellers={sellers}
                         isLoading={isLoadingSellers}
@@ -289,6 +250,13 @@ export function DashboardPage() {
                     </div>
                   </div>
                 </div>
+
+                <LeaderboardTable
+                  ref={leaderboardRef}
+                  rows={sortedRanking}
+                  activeMetric={activeRankingMetric}
+                  onMetricChange={setActiveRankingMetric}
+                />
               </div>
             ) : null}
           </div>

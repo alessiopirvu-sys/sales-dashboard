@@ -32,13 +32,13 @@ export async function getDashboardData(filters: DashboardFilters): Promise<Dashb
     trend: buildTrendSeries(filteredRows),
     comparison: {
       current: {
-        revenue: currentSummary.revenue,
-        dealsClosed: currentSummary.dealsClosed,
+        revenueTotal: currentSummary.revenueTotal,
+        dealsClosedTotal: currentSummary.dealsClosedTotal,
         closingRate: currentSummary.closingRate
       },
       previous: {
-        revenue: previousSummary.revenue,
-        dealsClosed: previousSummary.dealsClosed,
+        revenueTotal: previousSummary.revenueTotal,
+        dealsClosedTotal: previousSummary.dealsClosedTotal,
         closingRate: previousSummary.closingRate
       }
     },

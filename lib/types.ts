@@ -21,6 +21,10 @@ export type SheetColumnMapping = {
   noShowOffice: string;
   closedOffice: string;
   revenueOffice: string;
+  rifissatoOffice: string;
+  referenze: string;
+  closedReferenze: string;
+  revenueReferenze: string;
 };
 
 export type SheetsReadMode = "csv_public" | "google_api";
@@ -59,6 +63,10 @@ export type NormalizedSalesRow = {
   noShowOffice: number;
   closedOffice: number;
   revenueOffice: number;
+  rifissatoOffice: number;
+  referenze: number;
+  closedReferenze: number;
+  revenueReferenze: number;
   calls: number;
   appointmentsBooked: number;
   appointmentsDone: number;
@@ -90,6 +98,12 @@ export type CalculatedSalesKpis = {
     showUpRateOffice: number;
     closingRateOffice: number;
   };
+  referenze: {
+    conversionRateReferenze: number;
+    averageValueReferenze: number;
+    averageClosedValueReferenze: number;
+    incidenzaReferenze: number;
+  };
 };
 
 export type TimePreset = "today" | "week" | "month" | "custom";
@@ -102,6 +116,7 @@ export type DashboardFilters = {
 };
 
 export type SummaryMetrics = {
+  /* ── Funnel freddi (FR only) ── */
   calls: number;
   appointmentsBooked: number;
   appointmentsDone: number;
@@ -111,6 +126,29 @@ export type SummaryMetrics = {
   conversionRate: number;
   showUpRate: number;
   closingRate: number;
+  /* ── Referenze ── */
+  referenze: number;
+  closedReferenze: number;
+  revenueReferenze: number;
+  conversionRateReferenze: number;
+  averageValueReferenze: number;
+  averageTicketReferenze: number;
+  /* ── Ufficio ── */
+  officeBase: number;
+  appointmentsDoneOffice: number;
+  noShowOffice: number;
+  closedOffice: number;
+  revenueOffice: number;
+  showUpRateOffice: number;
+  noShowRateOffice: number;
+  closingRateOffice: number;
+  averageTicketOffice: number;
+  rifissatoOffice: number;
+  recoveryRateOffice: number;
+  /* ── Totali business (FR + Referenze + Ufficio) ── */
+  dealsClosedTotal: number;
+  revenueTotal: number;
+  averageTicketTotal: number;
 };
 
 export type RankingRow = SummaryMetrics & {
@@ -122,6 +160,9 @@ export type TrendPoint = {
   label: string;
   calls: number;
   revenue: number;
+  revenueFr: number;
+  revenueReferenze: number;
+  revenueOffice: number;
 };
 
 export type DashboardResponse = {
@@ -129,8 +170,8 @@ export type DashboardResponse = {
   ranking: RankingRow[];
   trend: TrendPoint[];
   comparison: {
-    current: Pick<SummaryMetrics, "revenue" | "dealsClosed" | "closingRate">;
-    previous: Pick<SummaryMetrics, "revenue" | "dealsClosed" | "closingRate">;
+    current: Pick<SummaryMetrics, "revenueTotal" | "dealsClosedTotal" | "closingRate">;
+    previous: Pick<SummaryMetrics, "revenueTotal" | "dealsClosedTotal" | "closingRate">;
   };
   meta: {
     lastUpdated: string;
