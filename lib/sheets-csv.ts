@@ -149,9 +149,15 @@ export async function validateSellerSheetUrl(sheetUrl: string): Promise<SellerVa
 
 export async function fetchAndParseSellerSheet(
   seller: Pick<SellerRecord, "id" | "name" | "sheet_url">,
+  options?: {
+    sheetUrl?: string;
+    sourceLabel?: string;
+  },
   referenceYear = new Date().getFullYear()
 ): Promise<{ rows: NormalizedSalesRow[]; debug: SellerSheetDebug }> {
-  const csvText = await fetchCsvTextFromUrl(seller.sheet_url);
+  const sheetUrl = options?.sheetUrl ?? seller.sheet_url;
+  const sourceLabel = options?.sourceLabel ?? "Principale";
+  const csvText = await fetchCsvTextFromUrl(sheetUrl);
   const matrix = parseCsvMatrix(csvText);
   const parsed = buildRowObjectsFromMatrix(matrix);
   const validCandidateRows = parsed.rows.filter((row) => isValidDataCandidate(row));
@@ -160,7 +166,7 @@ export async function fetchAndParseSellerSheet(
     spreadsheetId: seller.id,
     sheetName: seller.name,
     sellerName: seller.name,
-    publishedCsvUrl: seller.sheet_url,
+    publishedCsvUrl: sheetUrl,
     columns: SALES_SHEET_COLUMNS
   };
 
@@ -172,6 +178,7 @@ export async function fetchAndParseSellerSheet(
     rows: normalizedRows,
     debug: {
       seller: seller.name,
+      sourceLabel,
       detectedHeaderRowIndex: parsed.detectedHeaderRowIndex,
       detectedHeaders: parsed.detectedHeaders,
       parsedRowCount: parsed.rows.length,
@@ -195,6 +202,6 @@ export async function fetchAndNormalizeSellerRows(
   seller: Pick<SellerRecord, "id" | "name" | "sheet_url">,
   referenceYear = new Date().getFullYear()
 ): Promise<NormalizedSalesRow[]> {
-  const result = await fetchAndParseSellerSheet(seller, referenceYear);
+  const result = await fetchAndParseSellerSheet(seller, undefined, referenceYear);
   return result.rows;
 }

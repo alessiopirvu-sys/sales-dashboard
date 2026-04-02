@@ -2,6 +2,8 @@ import { format, isValid, parse, setYear } from "date-fns";
 
 import { NormalizedSalesRow, RawSheetRow, SheetSourceConfig } from "@/lib/types";
 
+const WEEKDAY_MARKERS = new Set(["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"]);
+
 export function parseItalianDate(
   value: unknown,
   referenceYear = new Date().getFullYear()
@@ -102,15 +104,17 @@ export function parseSalesSheetRow(
   const appointmentsDoneFr = parseFlexibleNumber(row[source.columns.appointmentsDoneFr]);
   const closedFr = parseFlexibleNumber(row[source.columns.closedFr]);
   const revenueFr = parseFlexibleNumber(row[source.columns.revenueFr]);
+  const explicitSeller = normalizeCell(row.seller);
+  const normalizedType = normalizeCell(row[source.columns.type]).toUpperCase();
+  const seller =
+    explicitSeller && !WEEKDAY_MARKERS.has(explicitSeller.toUpperCase())
+      ? explicitSeller
+      : source.sellerName || (WEEKDAY_MARKERS.has(normalizedType) ? "Non assegnato" : normalizedType || "Non assegnato");
 
   return {
     date,
     type: normalizeCell(row[source.columns.type]),
-    seller:
-      normalizeCell(row.seller) ||
-      normalizeCell(row[source.columns.type]) ||
-      source.sellerName ||
-      "Non assegnato",
+    seller,
     callsFr,
     notInterestedFr: parseFlexibleNumber(row[source.columns.notInterestedFr]),
     nrFr: parseFlexibleNumber(row[source.columns.nrFr]),

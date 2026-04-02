@@ -71,6 +71,19 @@ export function SellersList({
                       <span className="truncate">{formatConnectionLabel(seller.sheet_url)}</span>
                     </div>
                     <p className="mt-1 truncate text-xs text-slate-400">{seller.sheet_url}</p>
+                    {seller.sheet_url_april ? (
+                      <>
+                        <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
+                          <Link2 className="h-4 w-4 text-primary" />
+                          <span className="truncate">
+                            Aprile: {formatConnectionLabel(seller.sheet_url_april)}
+                          </span>
+                        </div>
+                        <p className="mt-1 truncate text-xs text-slate-400">
+                          {seller.sheet_url_april}
+                        </p>
+                      </>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <Button

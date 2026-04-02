@@ -17,7 +17,8 @@ type AddSellerModalProps = {
 
 const initialForm = {
   name: "",
-  sheetUrl: ""
+  sheetUrl: "",
+  aprilSheetUrl: ""
 };
 
 export function AddSellerModal({ open, onClose, onSaved, seller }: AddSellerModalProps) {
@@ -31,7 +32,8 @@ export function AddSellerModal({ open, onClose, onSaved, seller }: AddSellerModa
     if (open) {
       setForm({
         name: seller?.name ?? "",
-        sheetUrl: seller?.sheet_url ?? ""
+        sheetUrl: seller?.sheet_url ?? "",
+        aprilSheetUrl: seller?.sheet_url_april ?? ""
       });
       setError(null);
       setValidation(null);
@@ -51,6 +53,16 @@ export function AddSellerModal({ open, onClose, onSaved, seller }: AddSellerModa
 
     return isValidGoogleSheetsCsvUrl(form.sheetUrl.trim()) ? null : INVALID_SHEETS_CSV_MESSAGE;
   }, [form.sheetUrl]);
+
+  const localAprilUrlError = useMemo(() => {
+    if (!form.aprilSheetUrl.trim()) {
+      return null;
+    }
+
+    return isValidGoogleSheetsCsvUrl(form.aprilSheetUrl.trim())
+      ? null
+      : INVALID_SHEETS_CSV_MESSAGE;
+  }, [form.aprilSheetUrl]);
 
   const handleVerify = async () => {
     setIsVerifying(true);
@@ -91,6 +103,10 @@ export function AddSellerModal({ open, onClose, onSaved, seller }: AddSellerModa
         throw new Error(localUrlError);
       }
 
+      if (localAprilUrlError) {
+        throw new Error(localAprilUrlError);
+      }
+
       const method = seller ? "PATCH" : "POST";
       const url = seller ? `/api/sellers/${seller.id}` : "/api/sellers";
 
@@ -101,7 +117,8 @@ export function AddSellerModal({ open, onClose, onSaved, seller }: AddSellerModa
         },
         body: JSON.stringify({
           name: form.name,
-          sheetUrl: form.sheetUrl
+          sheetUrl: form.sheetUrl,
+          aprilSheetUrl: form.aprilSheetUrl
         })
       });
 
@@ -151,7 +168,7 @@ export function AddSellerModal({ open, onClose, onSaved, seller }: AddSellerModa
 
             <div className="grid gap-2">
               <label className="text-sm font-medium text-slate-600">
-                Link Google Sheet (CSV)
+                Link Google Sheet principale (CSV)
               </label>
               <Input
                 value={form.sheetUrl}
@@ -166,6 +183,26 @@ export function AddSellerModal({ open, onClose, onSaved, seller }: AddSellerModa
                 non sono validi.
               </p>
               {localUrlError ? <p className="text-sm text-amber-600">{localUrlError}</p> : null}
+            </div>
+
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-slate-600">
+                Link Google Sheet aprile (CSV)
+              </label>
+              <Input
+                value={form.aprilSheetUrl}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, aprilSheetUrl: event.target.value }))
+                }
+                placeholder="https://docs.google.com/spreadsheets/.../output=csv"
+                className="h-12"
+              />
+              <p className="text-xs text-slate-500">
+                Campo opzionale. Se presente, i dati di aprile verranno sommati allo stesso venditore.
+              </p>
+              {localAprilUrlError ? (
+                <p className="text-sm text-amber-600">{localAprilUrlError}</p>
+              ) : null}
             </div>
 
             <div className="flex justify-between gap-2">
@@ -184,7 +221,7 @@ export function AddSellerModal({ open, onClose, onSaved, seller }: AddSellerModa
                 <Button
                   className="h-11 rounded-full px-5"
                   onClick={() => void handleSubmit()}
-                  disabled={isSaving || !!localUrlError}
+                  disabled={isSaving || !!localUrlError || !!localAprilUrlError}
                 >
                   {isSaving ? "Salvataggio..." : "Salva venditore"}
                 </Button>

@@ -40,6 +40,13 @@ async function insertSyncLog(
   });
 }
 
+function getSellerSheetSources(seller: SellerRecord) {
+  return [
+    { label: "Principale", url: seller.sheet_url },
+    ...(seller.sheet_url_april ? [{ label: "Aprile", url: seller.sheet_url_april }] : [])
+  ];
+}
+
 export async function GET(request: NextRequest) {
   try {
     const filters = parseFiltersFromSearchParams(request.nextUrl.searchParams);
@@ -64,29 +71,51 @@ export async function GET(request: NextRequest) {
     const settledRows = await Promise.allSettled(
       activeSellers.map(async (seller) => {
         try {
-          if (!isValidGoogleSheetsCsvUrl(seller.sheet_url)) {
-            await insertSyncLog(supabase, seller.id, "error", "Invalid Google Sheets CSV URL");
-            return [];
+          const sources = getSellerSheetSources(seller);
+          const sellerRows: NormalizedSalesRow[] = [];
+
+          for (const source of sources) {
+            if (!isValidGoogleSheetsCsvUrl(source.url)) {
+              await insertSyncLog(
+                supabase,
+                seller.id,
+                "error",
+                `Invalid Google Sheets CSV URL (${source.label})`
+              );
+              continue;
+            }
+
+            const parsed = await fetchAndParseSellerSheet(
+              seller,
+              {
+                sheetUrl: source.url,
+                sourceLabel: source.label
+              },
+              referenceYear
+            );
+            parserDebug.push(parsed.debug);
+            sellerRows.push(...parsed.rows);
+            console.log("[dashboard-data] detected header row", {
+              seller: seller.name,
+              sourceLabel: parsed.debug.sourceLabel,
+              detectedHeaderRowIndex: parsed.debug.detectedHeaderRowIndex
+            });
+            console.log("[dashboard-data] mapped columns found", {
+              seller: seller.name,
+              sourceLabel: parsed.debug.sourceLabel,
+              detectedHeaders: parsed.debug.detectedHeaders
+            });
+            console.log("[dashboard-data] rows parsed", {
+              seller: seller.name,
+              sourceLabel: parsed.debug.sourceLabel,
+              parsedRowCount: parsed.debug.parsedRowCount,
+              validRowCount: parsed.debug.validRowCount,
+              skippedRowCount: parsed.debug.skippedRowCount
+            });
           }
 
-          const parsed = await fetchAndParseSellerSheet(seller, referenceYear);
-          parserDebug.push(parsed.debug);
-          console.log("[dashboard-data] detected header row", {
-            seller: seller.name,
-            detectedHeaderRowIndex: parsed.debug.detectedHeaderRowIndex
-          });
-          console.log("[dashboard-data] mapped columns found", {
-            seller: seller.name,
-            detectedHeaders: parsed.debug.detectedHeaders
-          });
-          console.log("[dashboard-data] rows parsed", {
-            seller: seller.name,
-            parsedRowCount: parsed.debug.parsedRowCount,
-            validRowCount: parsed.debug.validRowCount,
-            skippedRowCount: parsed.debug.skippedRowCount
-          });
           await insertSyncLog(supabase, seller.id, "success", "Foglio sincronizzato live.");
-          return parsed.rows;
+          return sellerRows;
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Errore sconosciuto durante il fetch del foglio.";

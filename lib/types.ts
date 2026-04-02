@@ -185,6 +185,7 @@ export type SellerRecord = {
   id: string;
   name: string;
   sheet_url: string;
+  sheet_url_april: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -193,6 +194,7 @@ export type SellerRecord = {
 export type SellerInput = {
   name: string;
   sheetUrl: string;
+  aprilSheetUrl?: string;
 };
 
 export type SellerValidationResult = {
@@ -211,6 +213,7 @@ export type SellerDashboardBreakdown = {
 
 export type SellerSheetDebug = {
   seller: string;
+  sourceLabel: string;
   detectedHeaderRowIndex: number;
   detectedHeaders: string[];
   parsedRowCount: number;
