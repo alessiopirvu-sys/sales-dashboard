@@ -4,10 +4,63 @@ import { NormalizedSalesRow, RawSheetRow, SheetSourceConfig } from "@/lib/types"
 
 const WEEKDAY_MARKERS = new Set(["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"]);
 
+type DateParsingOptions = {
+  referenceYear?: number;
+  forcedMonth?: number;
+};
+
+function getValidForcedMonth(month: number | undefined) {
+  return month !== undefined && month >= 1 && month <= 12 ? month : undefined;
+}
+
+function extractMonthFromRawDate(raw: string) {
+  const normalized = raw.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const dayMonthMatch = normalized.match(/^(\d{1,2})[/-](\d{1,2})(?:[/-]\d{2,4})?$/);
+  if (dayMonthMatch) {
+    const month = Number(dayMonthMatch[2]);
+    return month >= 1 && month <= 12 ? month : null;
+  }
+
+  const isoMatch = normalized.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+  if (isoMatch) {
+    const month = Number(isoMatch[2]);
+    return month >= 1 && month <= 12 ? month : null;
+  }
+
+  return null;
+}
+
+function parseYearlessDate(raw: string, referenceYear: number, forcedMonth?: number) {
+  const match = raw.match(/^(\d{1,2})[/-](\d{1,2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const day = Number(match[1]);
+  const sourceMonth = Number(match[2]);
+  const month = getValidForcedMonth(forcedMonth) ?? sourceMonth;
+  const candidate = new Date(referenceYear, month - 1, day);
+
+  if (
+    candidate.getFullYear() !== referenceYear ||
+    candidate.getMonth() !== month - 1 ||
+    candidate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return format(candidate, "yyyy-MM-dd");
+}
+
 export function parseItalianDate(
   value: unknown,
-  referenceYear = new Date().getFullYear()
+  options: DateParsingOptions = {}
 ): string | null {
+  const referenceYear = options.referenceYear ?? new Date().getFullYear();
   if (typeof value !== "string" && !(value instanceof Date)) {
     return null;
   }
@@ -35,6 +88,11 @@ export function parseItalianDate(
     if (isValid(parsed)) {
       return format(parsed, "yyyy-MM-dd");
     }
+  }
+
+  const yearlessDate = parseYearlessDate(raw, referenceYear, options.forcedMonth);
+  if (yearlessDate) {
+    return yearlessDate;
   }
 
   const yearlessFormats = ["dd/MM", "d/M", "dd-MM", "d-M"];
@@ -92,9 +150,22 @@ export function parseSalesSheetRow(
   source: SheetSourceConfig,
   options?: {
     referenceYear?: number;
+    forcedMonth?: number;
   }
 ): NormalizedSalesRow | null {
-  const date = parseItalianDate(row[source.columns.date], options?.referenceYear);
+  const rawDate = normalizeCell(row[source.columns.date]);
+  const forcedMonth = getValidForcedMonth(options?.forcedMonth);
+  const sourceMonth = extractMonthFromRawDate(rawDate);
+
+  // For month-specific sheets, ignore any row whose explicit date belongs to another month.
+  if (forcedMonth !== undefined && sourceMonth !== null && sourceMonth !== forcedMonth) {
+    return null;
+  }
+
+  const date = parseItalianDate(rawDate, {
+    referenceYear: options?.referenceYear,
+    forcedMonth
+  });
   if (!date) {
     return null;
   }
@@ -154,6 +225,7 @@ export function normalizeRowsFromSheet(
   source: SheetSourceConfig,
   options?: {
     referenceYear?: number;
+    forcedMonth?: number;
   }
 ): NormalizedSalesRow[] {
   return rows

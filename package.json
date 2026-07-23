@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "rm -f tsconfig.tsbuildinfo && tsc --noEmit"
+    "typecheck": "rm -f tsconfig.tsbuildinfo && tsc --noEmit",
+    "audit:sheets": "node scripts/audit-sellers.js"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.1.1",
@@ -18,6 +19,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.468.0",
     "next": "^14.2.25",
+    "openai": "^6.48.0",
     "papaparse": "^5.4.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

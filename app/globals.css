@@ -13,42 +13,30 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background-image: radial-gradient(circle at top left, rgba(81, 131, 255, 0.12), transparent 24%),
-      radial-gradient(circle at top right, rgba(177, 217, 255, 0.42), transparent 18%),
-      linear-gradient(180deg, #f8fbff 0%, #f2f6fb 100%);
+    background: #f7f7fa;
     min-height: 100vh;
   }
 }
 
 @layer utilities {
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.78);
-    backdrop-filter: blur(18px);
-  }
-
   .text-balance {
     text-wrap: balance;
   }
 
   .surface-card {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(252, 253, 255, 0.92));
-    box-shadow: 0 30px 80px -42px rgba(33, 71, 148, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 6px 24px -18px rgba(15, 23, 42, 0.12);
   }
 
   .surface-pill {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(246, 249, 255, 0.92));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 18px 45px -32px rgba(37, 82, 168, 0.18);
-  }
-
-  .grid-fade {
-    background-image: linear-gradient(rgba(221, 231, 247, 0.34) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(221, 231, 247, 0.34) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.95);
   }
 
   .subtle-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(140, 169, 220, 0.7) transparent;
+    scrollbar-color: rgba(148, 163, 184, 0.7) transparent;
   }
 
   .subtle-scrollbar::-webkit-scrollbar {
@@ -61,6 +49,6 @@
 
   .subtle-scrollbar::-webkit-scrollbar-thumb {
     border-radius: 9999px;
-    background: linear-gradient(180deg, rgba(165, 194, 245, 0.85), rgba(128, 166, 230, 0.9));
+    background: rgba(148, 163, 184, 0.8);
   }
 }

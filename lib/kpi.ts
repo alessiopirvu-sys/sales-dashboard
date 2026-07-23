@@ -3,6 +3,7 @@ import {
   CalculatedSalesKpis,
   NormalizedSalesRow,
   RankingRow,
+  SellerDailyPoint,
   SummaryMetrics,
   TrendPoint
 } from "@/lib/types";
@@ -241,6 +242,11 @@ export function buildTrendSeries(rows: NormalizedSalesRow[]): TrendPoint[] {
       date: row.date,
       label: row.date.slice(8, 10),
       calls: 0,
+      appointmentsBooked: 0,
+      appointmentsDone: 0,
+      dealsClosed: 0,
+      showUpRate: 0,
+      closingRate: 0,
       revenue: 0,
       revenueFr: 0,
       revenueReferenze: 0,
@@ -248,13 +254,56 @@ export function buildTrendSeries(rows: NormalizedSalesRow[]): TrendPoint[] {
     };
 
     current.calls += row.calls;
+    current.appointmentsBooked += row.appointmentsBooked;
+    current.appointmentsDone += row.appointmentsDone;
+    current.dealsClosed += row.dealsClosed;
     current.revenueFr += row.revenueFr;
     current.revenueReferenze += row.revenueReferenze;
     current.revenueOffice += row.revenueOffice;
     current.revenue = current.revenueFr + current.revenueReferenze + current.revenueOffice;
+    current.showUpRate = safeDivide(current.appointmentsDone, current.appointmentsBooked) * 100;
+    current.closingRate = safeDivide(current.dealsClosed, current.appointmentsDone) * 100;
     accumulator.set(row.date, current);
     return accumulator;
   }, new Map());
 
   return Array.from(grouped.values()).sort((left, right) => left.date.localeCompare(right.date));
+}
+
+export function buildSellerDailySeries(rows: NormalizedSalesRow[]): SellerDailyPoint[] {
+  const grouped = rows.reduce<Map<string, SellerDailyPoint>>((accumulator, row) => {
+    const key = `${row.seller}::${row.date}`;
+    const current = accumulator.get(key) ?? {
+      seller: row.seller,
+      date: row.date,
+      label: row.date.slice(8, 10),
+      calls: 0,
+      appointmentsBooked: 0,
+      appointmentsDone: 0,
+      dealsClosed: 0,
+      revenueTotal: 0,
+      showUpRate: 0,
+      closingRate: 0,
+      conversionRate: 0
+    };
+
+    current.calls += row.calls;
+    current.appointmentsBooked += row.appointmentsBooked;
+    current.appointmentsDone += row.appointmentsDone;
+    current.dealsClosed += row.dealsClosed;
+    current.revenueTotal += row.revenue + row.revenueReferenze + row.revenueOffice;
+    current.showUpRate = safeDivide(current.appointmentsDone, current.appointmentsBooked) * 100;
+    current.closingRate = safeDivide(current.dealsClosed, current.appointmentsDone) * 100;
+    current.conversionRate = safeDivide(current.dealsClosed, current.calls) * 100;
+    accumulator.set(key, current);
+    return accumulator;
+  }, new Map());
+
+  return Array.from(grouped.values()).sort((left, right) => {
+    if (left.date !== right.date) {
+      return left.date.localeCompare(right.date);
+    }
+
+    return left.seller.localeCompare(right.seller);
+  });
 }

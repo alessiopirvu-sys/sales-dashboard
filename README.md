@@ -26,9 +26,20 @@ lib/
 ## Setup locale
 
 1. Installa le dipendenze con `npm install`
-2. Crea `.env.local` partendo da `.env.example`
+2. Configura `.env.local`
 3. Avvia il progetto con `npm run dev`
 4. Apri `http://localhost:3000`
+
+### Variabili ambiente AI
+
+Per attivare l'assistente KPI con OpenAI aggiungi anche:
+
+```env
+OPENAI_API_KEY=la_tua_chiave_openai
+OPENAI_MODEL=gpt-5.6
+```
+
+Se `OPENAI_API_KEY` manca, la Home continua a funzionare usando il fallback KPI locale.
 
 ## Configurazione Google Sheets
 

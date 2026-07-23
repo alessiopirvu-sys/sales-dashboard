@@ -41,10 +41,7 @@ export const LeaderboardTable = React.forwardRef<HTMLDivElement, LeaderboardTabl
   const activeMetricConfig = getRankingMetricConfig(activeMetric);
 
   return (
-    <Card
-      ref={ref}
-      className={cn("w-full max-w-full self-start overflow-hidden rounded-[2.35rem]", className)}
-    >
+    <Card ref={ref} className={cn("w-full max-w-full self-start overflow-hidden", className)}>
       <CardHeader className="pb-4 max-sm:px-4 max-sm:pt-5">
         <div className="space-y-4">
           <CardTitle className="text-[1.35rem]">Venditori</CardTitle>
@@ -59,10 +56,10 @@ export const LeaderboardTable = React.forwardRef<HTMLDivElement, LeaderboardTabl
                     type="button"
                     onClick={() => onMetricChange(metric.key)}
                     className={cn(
-                      "rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200",
+                      "rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200",
                       isActive
-                        ? "bg-primary text-white shadow-soft"
-                        : "border border-white/80 bg-white/75 text-slate-600 hover:bg-white hover:text-slate-900"
+                        ? "bg-primary text-white"
+                        : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
                     {metric.label}
@@ -74,9 +71,9 @@ export const LeaderboardTable = React.forwardRef<HTMLDivElement, LeaderboardTabl
         </div>
       </CardHeader>
       <CardContent className="w-full max-w-full max-sm:px-4 max-sm:pb-4">
-        <div className="hidden h-auto overflow-x-auto overflow-y-hidden rounded-[1.9rem] border border-slate-100 bg-white/70 md:block">
+        <div className="hidden h-auto overflow-x-auto overflow-y-hidden rounded-3xl border border-slate-200 bg-white md:block">
           <Table>
-            <TableHeader className="bg-[linear-gradient(180deg,rgba(248,250,255,0.98),rgba(244,247,252,0.98))]">
+            <TableHeader className="bg-slate-50">
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Chiamate</TableHead>
@@ -99,7 +96,7 @@ export const LeaderboardTable = React.forwardRef<HTMLDivElement, LeaderboardTabl
             <TableBody>
               {rows.length > 0 ? (
                 rows.map((row) => (
-                  <TableRow key={row.seller} className="hover:bg-[#f7faff]">
+                  <TableRow key={row.seller} className="hover:bg-slate-50">
                     <TableCell className="font-semibold text-slate-900">{row.seller}</TableCell>
                     <TableCell>{formatCompactNumber(row.calls)}</TableCell>
                     <TableCell>{formatCompactNumber(row.appointmentsBooked)}</TableCell>
@@ -133,7 +130,7 @@ export const LeaderboardTable = React.forwardRef<HTMLDivElement, LeaderboardTabl
             rows.map((row, index) => (
               <div
                 key={row.seller}
-                className="w-full max-w-full min-w-0 rounded-[1.6rem] border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,249,255,0.94))] p-3.5 shadow-[0_18px_34px_-32px_rgba(46,87,173,0.28)] sm:p-4"
+                className="w-full max-w-full min-w-0 rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">

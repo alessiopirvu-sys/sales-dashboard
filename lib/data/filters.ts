@@ -70,6 +70,16 @@ export function resolvePreviousDateRange(filters: DashboardFilters) {
 }
 
 export function buildDashboardUrl(filters: DashboardFilters) {
+  return buildDashboardUrlWithOptions(filters);
+}
+
+export function buildDashboardUrlWithOptions(
+  filters: DashboardFilters,
+  options?: {
+    cacheBust?: string;
+    details?: "lite" | "full";
+  }
+) {
   const params = new URLSearchParams({
     preset: filters.preset,
     seller: filters.seller
@@ -81,6 +91,14 @@ export function buildDashboardUrl(filters: DashboardFilters) {
 
   if (filters.endDate) {
     params.set("endDate", filters.endDate);
+  }
+
+  if (options?.cacheBust) {
+    params.set("cacheBust", options.cacheBust);
+  }
+
+  if (options?.details) {
+    params.set("details", options.details);
   }
 
   return `/api/dashboard-data?${params.toString()}`;

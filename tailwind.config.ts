@@ -10,30 +10,30 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        border: "hsl(214 32% 91%)",
-        input: "hsl(214 32% 91%)",
-        ring: "hsl(219 86% 59%)",
-        background: "hsl(210 40% 98%)",
-        foreground: "hsl(220 30% 18%)",
+        border: "hsl(220 14% 90%)",
+        input: "hsl(220 14% 90%)",
+        ring: "hsl(262 83% 58%)",
+        background: "hsl(210 20% 98%)",
+        foreground: "hsl(222 22% 12%)",
         primary: {
-          DEFAULT: "hsl(219 86% 59%)",
+          DEFAULT: "hsl(262 83% 58%)",
           foreground: "hsl(210 40% 98%)"
         },
         secondary: {
-          DEFAULT: "hsl(210 40% 96%)",
-          foreground: "hsl(220 30% 18%)"
+          DEFAULT: "hsl(0 0% 100%)",
+          foreground: "hsl(222 22% 12%)"
         },
         muted: {
-          DEFAULT: "hsl(210 40% 96%)",
-          foreground: "hsl(215 20% 45%)"
+          DEFAULT: "hsl(220 20% 96%)",
+          foreground: "hsl(215 14% 42%)"
         },
         accent: {
-          DEFAULT: "hsl(215 100% 96%)",
-          foreground: "hsl(219 86% 59%)"
+          DEFAULT: "hsl(270 100% 98%)",
+          foreground: "hsl(262 83% 58%)"
         },
         card: {
           DEFAULT: "hsl(0 0% 100%)",
-          foreground: "hsl(220 30% 18%)"
+          foreground: "hsl(222 22% 12%)"
         }
       },
       fontFamily: {
@@ -41,17 +41,14 @@ const config: Config = {
         display: ["Aptos Display", "Aptos", "Segoe UI Variable", "Helvetica Neue", "sans-serif"]
       },
       boxShadow: {
-        soft: "0 24px 60px -32px rgba(58, 106, 222, 0.22)",
-        card: "0 30px 80px -38px rgba(22, 51, 108, 0.18)",
-        float: "0 40px 120px -58px rgba(33, 71, 148, 0.26)",
+        soft: "0 10px 30px -18px rgba(24, 24, 27, 0.16)",
+        card: "0 6px 24px -18px rgba(15, 23, 42, 0.12)",
+        float: "0 18px 40px -24px rgba(15, 23, 42, 0.16)",
         insetSoft: "inset 0 1px 0 rgba(255,255,255,0.75)"
       },
       borderRadius: {
-        "4xl": "2rem",
-        "5xl": "2.5rem"
-      },
-      backgroundImage: {
-        hero: "radial-gradient(circle at 10% 10%, rgba(77, 132, 255, 0.18), transparent 30%), radial-gradient(circle at 85% 5%, rgba(175, 211, 255, 0.45), transparent 24%), linear-gradient(180deg, #fbfdff 0%, #f3f7fc 100%)"
+        "4xl": "1.5rem",
+        "5xl": "1.75rem"
       }
     }
   },

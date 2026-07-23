@@ -1,9 +1,11 @@
+import { useState } from "react";
 import {
   Activity,
   BadgeEuro,
   Building2,
   CalendarCheck2,
   CalendarPlus2,
+  ChevronDown,
   PhoneCall,
   Percent,
   RefreshCw,
@@ -32,7 +34,7 @@ type KpiCardDef = {
 
 function RevenueHeroCard({ revenue }: { revenue: number }) {
   return (
-    <div className="relative col-span-2 overflow-hidden rounded-[32px] border-0 bg-[#2F6BFF] text-white shadow-lg xl:col-span-4">
+    <div className="relative col-span-2 overflow-hidden rounded-4xl border border-[#2F6BFF] bg-[#3B5BFF] text-white xl:col-span-4">
       <div className="p-6 md:p-7">
         <div className="flex items-start justify-between gap-5">
           <div>
@@ -42,7 +44,7 @@ function RevenueHeroCard({ revenue }: { revenue: number }) {
             </p>
             <p className="mt-2 text-sm text-white/70">Contatti freddi - periodo selezionato</p>
           </div>
-          <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white/15 sm:h-16 sm:w-16 sm:rounded-[24px]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/15 sm:h-16 sm:w-16">
             <BadgeEuro className="h-4 w-4 text-white sm:h-5 sm:w-5" />
           </div>
         </div>
@@ -58,33 +60,8 @@ function KpiCard({ card, summary }: { card: KpiCardDef; summary: SummaryMetrics 
   if (card.variant === "referenze-hero") {
     return (
       <div
-        className={`group col-span-1 overflow-hidden rounded-[2.25rem] shadow-lg transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-float ${card.className}`}
-        style={{ background: "#FFF4CC" }}
-      >
-        <div className="p-4 sm:p-6">
-          <div className="flex items-start justify-between gap-5">
-            <div>
-              <p className="text-sm font-medium text-slate-800">
-                {card.label}
-              </p>
-              <p className="mt-3 text-[1.65rem] font-semibold tracking-[-0.04em] text-black sm:text-[2rem]">
-                {card.formatter(value)}
-              </p>
-            </div>
-            <div className="flex h-11 w-11 items-center justify-center rounded-[1.35rem] bg-amber-400/25 transition-all duration-300 sm:h-14 sm:w-14">
-              <Icon className="h-4 w-4 text-amber-600 sm:h-5 sm:w-5" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (card.variant === "office-hero") {
-    return (
-      <div
-        className={`group col-span-1 overflow-hidden rounded-[2.25rem] shadow-lg transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-float ${card.className}`}
-        style={{ background: "#6C5CE7" }}
+        className={`group col-span-1 overflow-hidden rounded-4xl border border-[#F59E0B] transition-transform duration-300 ${card.className}`}
+        style={{ background: "#F59E0B" }}
       >
         <div className="p-4 sm:p-6">
           <div className="flex items-start justify-between gap-5">
@@ -96,7 +73,32 @@ function KpiCard({ card, summary }: { card: KpiCardDef; summary: SummaryMetrics 
                 {card.formatter(value)}
               </p>
             </div>
-            <div className="flex h-11 w-11 items-center justify-center rounded-[1.35rem] bg-white/15 transition-all duration-300 sm:h-14 sm:w-14">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 transition-all duration-300 sm:h-14 sm:w-14">
+              <Icon className="h-4 w-4 text-white sm:h-5 sm:w-5" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (card.variant === "office-hero") {
+    return (
+      <div
+        className={`group col-span-1 overflow-hidden rounded-4xl border border-[#7C3AED] transition-transform duration-300 ${card.className}`}
+        style={{ background: "#7C3AED" }}
+      >
+        <div className="p-4 sm:p-6">
+          <div className="flex items-start justify-between gap-5">
+            <div>
+              <p className="text-sm font-medium text-white/80">
+                {card.label}
+              </p>
+              <p className="mt-3 text-[1.65rem] font-semibold tracking-[-0.04em] text-white sm:text-[2rem]">
+                {card.formatter(value)}
+              </p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 transition-all duration-300 sm:h-14 sm:w-14">
               <Icon className="h-4 w-4 text-white sm:h-5 sm:w-5" />
             </div>
           </div>
@@ -107,7 +109,7 @@ function KpiCard({ card, summary }: { card: KpiCardDef; summary: SummaryMetrics 
 
   return (
     <Card
-      className={`group col-span-1 overflow-hidden rounded-[2.25rem] transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-float ${card.surfaceClassName} ${card.className}`}
+      className={`group col-span-1 overflow-hidden transition-transform duration-300 ${card.surfaceClassName} ${card.className}`}
     >
       <CardContent className="p-4 sm:p-6">
         <div className="flex items-start justify-between gap-5">
@@ -120,7 +122,7 @@ function KpiCard({ card, summary }: { card: KpiCardDef; summary: SummaryMetrics 
             </p>
           </div>
           <div
-            className={`flex h-11 w-11 items-center justify-center rounded-[1.35rem] transition-all duration-300 sm:h-14 sm:w-14 ${card.iconWrapClassName} ${card.iconClassName}`}
+            className={`flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 sm:h-14 sm:w-14 ${card.iconWrapClassName} ${card.iconClassName}`}
           >
             <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
@@ -139,10 +141,10 @@ const frCards: KpiCardDef[] = [
     icon: PhoneCall,
     formatter: formatCompactNumber,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-sky-100 bg-sky-50",
-    labelClassName: "text-sky-700",
-    iconWrapClassName: "bg-sky-100",
-    iconClassName: "text-sky-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#3B5BFF]",
+    iconWrapClassName: "bg-[#EEF2FF]",
+    iconClassName: "text-[#3B5BFF]"
   },
   {
     key: "appointmentsBooked",
@@ -150,10 +152,10 @@ const frCards: KpiCardDef[] = [
     icon: CalendarPlus2,
     formatter: formatCompactNumber,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-sky-100 bg-sky-50",
-    labelClassName: "text-sky-700",
-    iconWrapClassName: "bg-sky-100",
-    iconClassName: "text-sky-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#3B5BFF]",
+    iconWrapClassName: "bg-[#EEF2FF]",
+    iconClassName: "text-[#3B5BFF]"
   },
   {
     key: "appointmentsDone",
@@ -161,10 +163,10 @@ const frCards: KpiCardDef[] = [
     icon: CalendarCheck2,
     formatter: formatCompactNumber,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-sky-100 bg-sky-50",
-    labelClassName: "text-sky-700",
-    iconWrapClassName: "bg-sky-100",
-    iconClassName: "text-sky-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#3B5BFF]",
+    iconWrapClassName: "bg-[#EEF2FF]",
+    iconClassName: "text-[#3B5BFF]"
   },
   {
     key: "dealsClosed",
@@ -172,7 +174,7 @@ const frCards: KpiCardDef[] = [
     icon: Target,
     formatter: formatCompactNumber,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-slate-100 bg-slate-50",
+    surfaceClassName: "border border-slate-200 bg-white",
     labelClassName: "text-slate-700",
     iconWrapClassName: "bg-slate-100",
     iconClassName: "text-slate-600"
@@ -183,10 +185,10 @@ const frCards: KpiCardDef[] = [
     icon: Activity,
     formatter: formatCurrency,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-indigo-100 bg-indigo-50",
-    labelClassName: "text-indigo-700",
-    iconWrapClassName: "bg-indigo-100",
-    iconClassName: "text-indigo-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#3B5BFF]",
+    iconWrapClassName: "bg-[#EEF2FF]",
+    iconClassName: "text-[#3B5BFF]"
   },
   {
     key: "showUpRate",
@@ -194,10 +196,10 @@ const frCards: KpiCardDef[] = [
     icon: Percent,
     formatter: formatPercentage,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-emerald-100 bg-emerald-50",
-    labelClassName: "text-emerald-700",
-    iconWrapClassName: "bg-emerald-100",
-    iconClassName: "text-emerald-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#3B5BFF]",
+    iconWrapClassName: "bg-[#EEF2FF]",
+    iconClassName: "text-[#3B5BFF]"
   },
   {
     key: "closingRate",
@@ -205,10 +207,10 @@ const frCards: KpiCardDef[] = [
     icon: Percent,
     formatter: formatPercentage,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-emerald-100 bg-emerald-50",
-    labelClassName: "text-emerald-700",
-    iconWrapClassName: "bg-emerald-100",
-    iconClassName: "text-emerald-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#3B5BFF]",
+    iconWrapClassName: "bg-[#EEF2FF]",
+    iconClassName: "text-[#3B5BFF]"
   }
 ];
 
@@ -221,10 +223,10 @@ const referenzeCards: KpiCardDef[] = [
     icon: Users,
     formatter: formatCompactNumber,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-amber-100 bg-amber-50",
-    labelClassName: "text-amber-700",
-    iconWrapClassName: "bg-amber-100",
-    iconClassName: "text-amber-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#F59E0B]",
+    iconWrapClassName: "bg-[#FFF7ED]",
+    iconClassName: "text-[#F59E0B]"
   },
   {
     key: "closedReferenze",
@@ -232,10 +234,10 @@ const referenzeCards: KpiCardDef[] = [
     icon: UserCheck,
     formatter: formatCompactNumber,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-amber-100 bg-amber-50",
-    labelClassName: "text-amber-700",
-    iconWrapClassName: "bg-amber-100",
-    iconClassName: "text-amber-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#F59E0B]",
+    iconWrapClassName: "bg-[#FFF7ED]",
+    iconClassName: "text-[#F59E0B]"
   },
   {
     key: "revenueReferenze",
@@ -243,10 +245,10 @@ const referenzeCards: KpiCardDef[] = [
     icon: BadgeEuro,
     formatter: formatCurrency,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-amber-100 bg-amber-50",
-    labelClassName: "text-amber-700",
-    iconWrapClassName: "bg-amber-100",
-    iconClassName: "text-amber-600",
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#F59E0B]",
+    iconWrapClassName: "bg-[#FFF7ED]",
+    iconClassName: "text-[#F59E0B]",
     variant: "referenze-hero"
   },
   {
@@ -255,10 +257,10 @@ const referenzeCards: KpiCardDef[] = [
     icon: Percent,
     formatter: formatPercentage,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-orange-100 bg-orange-50",
-    labelClassName: "text-orange-700",
-    iconWrapClassName: "bg-orange-100",
-    iconClassName: "text-orange-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#F59E0B]",
+    iconWrapClassName: "bg-[#FFF7ED]",
+    iconClassName: "text-[#F59E0B]"
   },
   {
     key: "averageValueReferenze",
@@ -266,10 +268,10 @@ const referenzeCards: KpiCardDef[] = [
     icon: Activity,
     formatter: formatCurrency,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-orange-100 bg-orange-50",
-    labelClassName: "text-orange-700",
-    iconWrapClassName: "bg-orange-100",
-    iconClassName: "text-orange-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#F59E0B]",
+    iconWrapClassName: "bg-[#FFF7ED]",
+    iconClassName: "text-[#F59E0B]"
   },
   {
     key: "averageTicketReferenze",
@@ -277,10 +279,10 @@ const referenzeCards: KpiCardDef[] = [
     icon: Activity,
     formatter: formatCurrency,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-orange-100 bg-orange-50",
-    labelClassName: "text-orange-700",
-    iconWrapClassName: "bg-orange-100",
-    iconClassName: "text-orange-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#F59E0B]",
+    iconWrapClassName: "bg-[#FFF7ED]",
+    iconClassName: "text-[#F59E0B]"
   }
 ];
 
@@ -293,10 +295,10 @@ const officeCards: KpiCardDef[] = [
     icon: Building2,
     formatter: formatCompactNumber,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-violet-100 bg-violet-50",
-    labelClassName: "text-violet-700",
-    iconWrapClassName: "bg-violet-100",
-    iconClassName: "text-violet-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#7C3AED]",
+    iconWrapClassName: "bg-[#F5F3FF]",
+    iconClassName: "text-[#7C3AED]"
   },
   {
     key: "appointmentsDoneOffice",
@@ -304,10 +306,10 @@ const officeCards: KpiCardDef[] = [
     icon: CalendarCheck2,
     formatter: formatCompactNumber,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-violet-100 bg-violet-50",
-    labelClassName: "text-violet-700",
-    iconWrapClassName: "bg-violet-100",
-    iconClassName: "text-violet-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#7C3AED]",
+    iconWrapClassName: "bg-[#F5F3FF]",
+    iconClassName: "text-[#7C3AED]"
   },
   {
     key: "noShowOffice",
@@ -315,10 +317,10 @@ const officeCards: KpiCardDef[] = [
     icon: UserX,
     formatter: formatCompactNumber,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-violet-100 bg-violet-50",
-    labelClassName: "text-violet-700",
-    iconWrapClassName: "bg-violet-100",
-    iconClassName: "text-violet-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#7C3AED]",
+    iconWrapClassName: "bg-[#F5F3FF]",
+    iconClassName: "text-[#7C3AED]"
   },
   {
     key: "closedOffice",
@@ -337,10 +339,10 @@ const officeCards: KpiCardDef[] = [
     icon: BadgeEuro,
     formatter: formatCurrency,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-violet-100 bg-violet-50",
-    labelClassName: "text-violet-700",
-    iconWrapClassName: "bg-violet-100",
-    iconClassName: "text-violet-600",
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#7C3AED]",
+    iconWrapClassName: "bg-[#F5F3FF]",
+    iconClassName: "text-[#7C3AED]",
     variant: "office-hero"
   },
   {
@@ -349,10 +351,10 @@ const officeCards: KpiCardDef[] = [
     icon: Percent,
     formatter: formatPercentage,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-purple-100 bg-purple-50",
-    labelClassName: "text-purple-700",
-    iconWrapClassName: "bg-purple-100",
-    iconClassName: "text-purple-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#7C3AED]",
+    iconWrapClassName: "bg-[#F5F3FF]",
+    iconClassName: "text-[#7C3AED]"
   },
   {
     key: "noShowRateOffice",
@@ -360,10 +362,10 @@ const officeCards: KpiCardDef[] = [
     icon: Percent,
     formatter: formatPercentage,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-purple-100 bg-purple-50",
-    labelClassName: "text-purple-700",
-    iconWrapClassName: "bg-purple-100",
-    iconClassName: "text-purple-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#7C3AED]",
+    iconWrapClassName: "bg-[#F5F3FF]",
+    iconClassName: "text-[#7C3AED]"
   },
   {
     key: "closingRateOffice",
@@ -371,10 +373,10 @@ const officeCards: KpiCardDef[] = [
     icon: Percent,
     formatter: formatPercentage,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-purple-100 bg-purple-50",
-    labelClassName: "text-purple-700",
-    iconWrapClassName: "bg-purple-100",
-    iconClassName: "text-purple-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#7C3AED]",
+    iconWrapClassName: "bg-[#F5F3FF]",
+    iconClassName: "text-[#7C3AED]"
   },
   {
     key: "averageTicketOffice",
@@ -382,10 +384,10 @@ const officeCards: KpiCardDef[] = [
     icon: Activity,
     formatter: formatCurrency,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-purple-100 bg-purple-50",
-    labelClassName: "text-purple-700",
-    iconWrapClassName: "bg-purple-100",
-    iconClassName: "text-purple-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#7C3AED]",
+    iconWrapClassName: "bg-[#F5F3FF]",
+    iconClassName: "text-[#7C3AED]"
   },
   {
     key: "rifissatoOffice",
@@ -393,10 +395,10 @@ const officeCards: KpiCardDef[] = [
     icon: RefreshCw,
     formatter: formatCompactNumber,
     className: "xl:col-span-2",
-    surfaceClassName: "border border-purple-100 bg-purple-50",
-    labelClassName: "text-purple-700",
-    iconWrapClassName: "bg-purple-100",
-    iconClassName: "text-purple-600"
+    surfaceClassName: "border border-slate-200 bg-white",
+    labelClassName: "text-[#7C3AED]",
+    iconWrapClassName: "bg-[#F5F3FF]",
+    iconClassName: "text-[#7C3AED]"
   },
   {
     key: "recoveryRateOffice",
@@ -416,6 +418,9 @@ type KpiGridProps = {
 };
 
 export function KpiGrid({ summary }: KpiGridProps) {
+  const [isReferenzeOpen, setIsReferenzeOpen] = useState(true);
+  const [isOfficeOpen, setIsOfficeOpen] = useState(true);
+
   return (
     <div className="space-y-6">
       {/* Sezione A: KPI Freddi */}
@@ -428,22 +433,48 @@ export function KpiGrid({ summary }: KpiGridProps) {
 
       {/* Sezione: KPI Referenze */}
       <section>
-        <h3 className="mb-4 text-lg font-semibold text-slate-700">Referenze</h3>
-        <div className="grid grid-cols-2 gap-4 sm:gap-5 xl:grid-cols-6">
-          {referenzeCards.map((card) => (
-            <KpiCard key={card.key} card={card} summary={summary} />
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsReferenzeOpen((current) => !current)}
+          className="mb-4 flex items-center gap-2 text-left text-lg font-semibold text-slate-900"
+        >
+          <span>Referenze</span>
+          <ChevronDown
+            className={`h-5 w-5 text-slate-500 transition-transform duration-200 ${
+              isReferenzeOpen ? "rotate-0" : "-rotate-90"
+            }`}
+          />
+        </button>
+        {isReferenzeOpen ? (
+          <div className="grid grid-cols-2 gap-4 sm:gap-5 xl:grid-cols-6">
+            {referenzeCards.map((card) => (
+              <KpiCard key={card.key} card={card} summary={summary} />
+            ))}
+          </div>
+        ) : null}
       </section>
 
       {/* Sezione: KPI Ufficio */}
       <section>
-        <h3 className="mb-4 text-lg font-semibold text-slate-700">Ufficio</h3>
-        <div className="grid grid-cols-2 gap-4 sm:gap-5 xl:grid-cols-6">
-          {officeCards.map((card) => (
-            <KpiCard key={card.key} card={card} summary={summary} />
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsOfficeOpen((current) => !current)}
+          className="mb-4 flex items-center gap-2 text-left text-lg font-semibold text-slate-900"
+        >
+          <span>Ufficio</span>
+          <ChevronDown
+            className={`h-5 w-5 text-slate-500 transition-transform duration-200 ${
+              isOfficeOpen ? "rotate-0" : "-rotate-90"
+            }`}
+          />
+        </button>
+        {isOfficeOpen ? (
+          <div className="grid grid-cols-2 gap-4 sm:gap-5 xl:grid-cols-6">
+            {officeCards.map((card) => (
+              <KpiCard key={card.key} card={card} summary={summary} />
+            ))}
+          </div>
+        ) : null}
       </section>
     </div>
   );

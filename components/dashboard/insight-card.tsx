@@ -74,7 +74,7 @@ export function InsightCard({
   ];
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden rounded-[2.2rem]">
+    <Card className="flex h-full flex-col overflow-hidden">
       <CardHeader className="shrink-0 pb-3">
         <CardTitle className="text-[1.1rem] sm:text-[1.25rem]">Performance</CardTitle>
       </CardHeader>
@@ -85,7 +85,7 @@ export function InsightCard({
           return (
             <div
               key={metric.label}
-              className="flex min-h-0 flex-1 flex-col justify-center rounded-[1.55rem] bg-slate-50/95 p-3 sm:p-3.5"
+              className="flex min-h-0 flex-1 flex-col justify-center rounded-3xl border border-slate-200 bg-slate-50 p-4"
             >
               <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
                 <Icon className="h-4 w-4 text-primary" />

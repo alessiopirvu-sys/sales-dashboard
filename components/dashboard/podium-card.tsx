@@ -32,11 +32,11 @@ export function PodiumCard({ ranking, activeMetric }: PodiumCardProps) {
   const metric = getRankingMetricConfig(activeMetric);
 
   return (
-    <Card className="h-full rounded-[2.2rem] border border-white/85 bg-[linear-gradient(180deg,#ffffff_0%,#f7faff_100%)]">
+    <Card className="h-full">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-[1.1rem] sm:text-[1.25rem]">Top performers</CardTitle>
-          <div className="flex h-9 w-9 items-center justify-center rounded-[1rem] bg-primary/10 text-primary sm:h-10 sm:w-10">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:h-10 sm:w-10">
             <Trophy className="h-4 w-4" />
           </div>
         </div>
@@ -50,7 +50,7 @@ export function PodiumCard({ ranking, activeMetric }: PodiumCardProps) {
               return (
                 <div
                   key={row.seller}
-                  className="flex items-center justify-between rounded-[1.4rem] border border-slate-100 bg-white px-3.5 py-3 shadow-[0_18px_34px_-32px_rgba(46,87,173,0.28)] sm:rounded-[1.55rem] sm:px-4"
+                  className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white px-3.5 py-3 sm:px-4"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <div
@@ -60,7 +60,7 @@ export function PodiumCard({ ranking, activeMetric }: PodiumCardProps) {
                     >
                       {isTopThree ? badges[index] : index + 1}
                     </div>
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#dceaff,#ffffff)] text-sm font-semibold text-primary">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-900">
                       {initials(row.seller)}
                     </div>
                     <div className="min-w-0">
@@ -74,7 +74,7 @@ export function PodiumCard({ ranking, activeMetric }: PodiumCardProps) {
                       {metric.format(metric.getValue(row))}
                     </p>
                     {isTopThree ? (
-                      <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-xs text-slate-600">
+                      <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
                         <Medal className="h-3 w-3 text-primary" />
                         {index + 1}° posto
                       </div>

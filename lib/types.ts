@@ -115,6 +115,16 @@ export type DashboardFilters = {
   endDate?: string;
 };
 
+export type SellerSheetsMap = Record<string, string>;
+
+export type SellerSheetEntry = {
+  key: string;
+  year: number;
+  month: number;
+  label: string;
+  url: string;
+};
+
 export type SummaryMetrics = {
   /* ── Funnel freddi (FR only) ── */
   calls: number;
@@ -159,10 +169,29 @@ export type TrendPoint = {
   date: string;
   label: string;
   calls: number;
+  appointmentsBooked: number;
+  appointmentsDone: number;
+  dealsClosed: number;
+  showUpRate: number;
+  closingRate: number;
   revenue: number;
   revenueFr: number;
   revenueReferenze: number;
   revenueOffice: number;
+};
+
+export type SellerDailyPoint = {
+  seller: string;
+  date: string;
+  label: string;
+  calls: number;
+  appointmentsBooked: number;
+  appointmentsDone: number;
+  dealsClosed: number;
+  revenueTotal: number;
+  showUpRate: number;
+  closingRate: number;
+  conversionRate: number;
 };
 
 export type DashboardResponse = {
@@ -179,13 +208,18 @@ export type DashboardResponse = {
     availableSellers: string[];
     totalRows: number;
   };
+  channelKpis?: CalculatedSalesKpis;
+  sellerBreakdown?: SellerDashboardBreakdown[];
+  sellerDailyTrend?: SellerDailyPoint[];
 };
 
 export type SellerRecord = {
   id: string;
   name: string;
   sheet_url: string;
+  sheets: SellerSheetsMap | null;
   sheet_url_april: string | null;
+  sheet_url_may: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -194,7 +228,7 @@ export type SellerRecord = {
 export type SellerInput = {
   name: string;
   sheetUrl: string;
-  aprilSheetUrl?: string;
+  sheets?: SellerSheetsMap;
 };
 
 export type SellerValidationResult = {
@@ -229,4 +263,45 @@ export type SellerSheetDebug = {
     closedFr: number;
     revenueFr: number;
   }>;
+};
+
+export type AssistantReplySource = "openai" | "fallback";
+
+export type AssistantSectionTone = "neutral" | "positive" | "negative" | "action";
+
+export type AssistantStructuredSection = {
+  title: string;
+  tone: AssistantSectionTone;
+  items: string[];
+};
+
+export type AssistantStructuredMetric = {
+  label: string;
+  value: string;
+  note?: string;
+};
+
+export type AssistantStructuredSellerRow = {
+  seller: string;
+  calls: string;
+  booked: string;
+  done: string;
+  closed: string;
+  closing: string;
+  revenue: string;
+};
+
+export type AssistantStructuredReply = {
+  headline: string;
+  summary: string;
+  sections: AssistantStructuredSection[];
+  metrics: AssistantStructuredMetric[];
+  sellerRows: AssistantStructuredSellerRow[];
+};
+
+export type AssistantReply = {
+  answer: string;
+  source: AssistantReplySource;
+  model?: string;
+  structured?: AssistantStructuredReply;
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { LoaderCircle, TrendingUp } from "lucide-react";
@@ -19,30 +20,32 @@ import {
 import { TopNavbar } from "@/components/dashboard/top-navbar";
 import { TrendChartCard } from "@/components/dashboard/trend-chart-card";
 import { Card, CardContent } from "@/components/ui/card";
-import { AddSellerModal } from "@/components/sellers/AddSellerModal";
-import { SellersList } from "@/components/sellers/SellersList";
-import { buildDashboardUrl } from "@/lib/data/filters";
+import { buildDashboardUrlWithOptions } from "@/lib/data/filters";
 import { DashboardFilters, DashboardResponse, SellerRecord } from "@/lib/types";
 
 const initialFilters: DashboardFilters = {
   preset: "month",
   seller: "all"
 };
+const DASHBOARD_FETCH_TIMEOUT_MS = 60000;
+const DASHBOARD_FETCH_RETRIES = 2;
 
 export function DashboardPage() {
+  const router = useRouter();
   const [filters, setFilters] = useState<DashboardFilters>(initialFilters);
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSellerModalOpen, setIsSellerModalOpen] = useState(false);
-  const [editingSeller, setEditingSeller] = useState<SellerRecord | null>(null);
   const [sellers, setSellers] = useState<SellerRecord[]>([]);
   const [isLoadingSellers, setIsLoadingSellers] = useState(false);
   const [activeRankingMetric, setActiveRankingMetric] = useState<RankingMetricKey>("revenueTotal");
   const leaderboardRef = useRef<HTMLDivElement | null>(null);
+  const requestIdRef = useRef(0);
 
   const fetchData = async (nextFilters: DashboardFilters, refresh = false) => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setError(null);
     if (refresh) {
       setIsRefreshing(true);
@@ -51,22 +54,74 @@ export function DashboardPage() {
     }
 
     try {
-      const response = await fetch(buildDashboardUrl(nextFilters), { cache: "no-store" });
+      let response: Response | null = null;
+      let lastError: Error | null = null;
+      const shouldUseTimeout = refresh || Boolean(data);
+
+      for (let attempt = 0; attempt < DASHBOARD_FETCH_RETRIES; attempt += 1) {
+        const controller = new AbortController();
+        const timeoutId = shouldUseTimeout
+          ? setTimeout(() => controller.abort(), DASHBOARD_FETCH_TIMEOUT_MS)
+          : null;
+
+        try {
+          response = await fetch(
+            buildDashboardUrlWithOptions(
+              nextFilters,
+              refresh
+                ? { cacheBust: String(Date.now()), details: "lite" }
+                : { details: "lite" }
+            ),
+            {
+              cache: "no-store",
+              signal: controller.signal
+            }
+          );
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          break;
+        } catch (error) {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          lastError =
+            error instanceof Error ? error : new Error("Errore sconosciuto durante il caricamento.");
+
+          if (attempt < DASHBOARD_FETCH_RETRIES - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            continue;
+          }
+        }
+      }
+
+      if (!response) {
+        throw lastError ?? new Error("Impossibile caricare i dati della dashboard.");
+      }
+
       if (!response.ok) {
         throw new Error("Impossibile caricare i dati della dashboard.");
       }
 
       const payload = (await response.json()) as DashboardResponse;
-      setData(payload);
+      if (requestIdRef.current === requestId) {
+        setData(payload);
+      }
     } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Errore sconosciuto durante il caricamento."
-      );
+      if (requestIdRef.current === requestId) {
+        setError(
+          requestError instanceof Error && requestError.name === "AbortError"
+            ? "Il primo caricamento sta impiegando piu tempo del previsto. Riprova tra pochi secondi o usa Refresh."
+            : requestError instanceof Error
+              ? requestError.message
+              : "Errore sconosciuto durante il caricamento."
+        );
+      }
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      if (requestIdRef.current === requestId) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
     }
   };
 
@@ -98,28 +153,6 @@ export function DashboardPage() {
   useEffect(() => {
     void loadSellers();
   }, []);
-
-  const handleDeleteSeller = async (seller: SellerRecord) => {
-    try {
-      const response = await fetch(`/api/sellers/${seller.id}`, {
-        method: "DELETE"
-      });
-
-      const payload = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        throw new Error(payload.error || "Impossibile eliminare il venditore.");
-      }
-
-      await loadSellers();
-      await fetchData(filters, true);
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Errore sconosciuto durante l'eliminazione venditore."
-      );
-    }
-  };
 
   const sellerOptions = useMemo(() => {
     if (!data) {
@@ -158,123 +191,99 @@ export function DashboardPage() {
   }, [activeRankingMetric, data]);
 
   const handleRefresh = () => void fetchData(filters, true);
-  const handleExport = () => {};
+  const handleExport = () => router.push("/esportazioni");
 
   return (
-    <main className="min-h-screen bg-transparent px-3 py-4 sm:px-4 sm:py-6 md:px-8 md:py-8 lg:px-10 lg:py-10">
-      <div className="mx-auto max-w-[1480px]">
-        <section className="relative overflow-hidden rounded-[2rem] border border-white/85 bg-white/76 p-3 shadow-float backdrop-blur-xl sm:rounded-[2.4rem] sm:p-4 md:rounded-[2.8rem] md:p-6">
-          <div className="pointer-events-none absolute inset-0 bg-hero opacity-95" />
-          <div className="relative z-10 space-y-4">
-            <TopNavbar />
-
-            <AppHeader
-              title="Sales KPI Dashboard"
-              subtitle="Dashboard"
-              lastUpdatedLabel={lastUpdatedLabel}
-              onExport={handleExport}
-              onAddSeller={() => {
-                setEditingSeller(null);
-                setIsSellerModalOpen(true);
-              }}
-            />
-
-            <FilterBar
-              filters={filters}
-              sellerOptions={sellerOptions}
-              onChange={setFilters}
-              onRefresh={() => void fetchData(filters, true)}
-              isRefreshing={isRefreshing}
-            />
-
-            {error ? (
-              <Card className="border-rose-100 bg-rose-50/88">
-                <CardContent className="flex items-center gap-3 p-6 text-rose-700">
-                  <TrendingUp className="h-5 w-5" />
-                  <p>{error}</p>
-                </CardContent>
-              </Card>
-            ) : null}
-
-            {isLoading && !data ? (
-              <Card>
-                <CardContent className="flex min-h-[320px] items-center justify-center p-6">
-                  <div className="flex items-center gap-3 text-slate-500">
-                    <LoaderCircle className="h-6 w-6 animate-spin text-primary" />
-                    <span>Sincronizzazione KPI…</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : null}
-
-            {data ? (
-              <div className="space-y-5">
-                <div className="grid gap-5 xl:grid-cols-12">
-                  <div className="xl:col-span-5">
-                    <TrendChartCard trend={data.trend} />
-                  </div>
-                  <div className="xl:col-span-3">
-                    <InsightCard
-                      revenueTotal={periodComparison?.current.revenueTotal ?? 0}
-                      previousRevenueTotal={periodComparison?.previous.revenueTotal ?? 0}
-                      dealsClosedTotal={periodComparison?.current.dealsClosedTotal ?? 0}
-                      previousDealsClosedTotal={periodComparison?.previous.dealsClosedTotal ?? 0}
-                      closingRate={periodComparison?.current.closingRate ?? 0}
-                      previousClosingRate={periodComparison?.previous.closingRate ?? 0}
-                    />
-                  </div>
-                  <div className="xl:col-span-4">
-                    <PodiumCard ranking={sortedRanking.slice(0, 8)} activeMetric={activeRankingMetric} />
-                  </div>
-
-                  <div className="xl:col-span-8">
-                    <KpiGrid summary={data.summary} />
-                  </div>
-                  <div className="space-y-5 xl:col-span-4">
-                    <ProgressCard
-                      showUpRate={data.summary.showUpRate}
-                      closingRate={data.summary.closingRate}
-                      appointmentsDone={data.summary.appointmentsDone}
-                      dealsClosed={data.summary.dealsClosed}
-                    />
-                    <div className="surface-card flex flex-col overflow-hidden rounded-[2.2rem]">
-                      <SellersList
-                        sellers={sellers}
-                        isLoading={isLoadingSellers}
-                        onEdit={(seller) => {
-                          setEditingSeller(seller);
-                          setIsSellerModalOpen(true);
-                        }}
-                        onDelete={(seller) => void handleDeleteSeller(seller)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <LeaderboardTable
-                  ref={leaderboardRef}
-                  rows={sortedRanking}
-                  activeMetric={activeRankingMetric}
-                  onMetricChange={setActiveRankingMetric}
-                />
-              </div>
-            ) : null}
-          </div>
-        </section>
-      </div>
-
-      <AddSellerModal
-        open={isSellerModalOpen}
-        onClose={() => {
-          setIsSellerModalOpen(false);
-          setEditingSeller(null);
-        }}
-        onSaved={async () => {
-          await loadSellers();
-          await fetchData(filters, true);
-        }}
-        seller={editingSeller}
+    <main className="mx-auto max-w-[1480px] space-y-6">
+      <AppHeader
+        title="Dashboard"
+        subtitle="Sales KPI Dashboard"
+        lastUpdatedLabel={lastUpdatedLabel}
+        onExport={handleExport}
       />
+
+      <FilterBar
+        filters={filters}
+        sellerOptions={sellerOptions}
+        onChange={setFilters}
+        onRefresh={() => void fetchData(filters, true)}
+        isRefreshing={isRefreshing}
+      />
+
+      {error ? (
+        <Card className="border-rose-200 bg-rose-50">
+          <CardContent className="flex items-center gap-3 p-6 text-rose-700">
+            <TrendingUp className="h-5 w-5" />
+            <p>{error}</p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {isLoading && !data ? (
+        <Card>
+          <CardContent className="flex min-h-[320px] items-center justify-center p-6">
+            <div className="flex items-center gap-3 text-slate-500">
+              <LoaderCircle className="h-6 w-6 animate-spin text-primary" />
+              <span>Sincronizzazione KPI…</span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {data ? (
+        <div className="space-y-6">
+          <div className="grid gap-6 xl:grid-cols-12">
+            <div className="xl:col-span-6">
+              <TrendChartCard trend={data.trend} />
+            </div>
+            <div className="xl:col-span-3">
+              <InsightCard
+                revenueTotal={periodComparison?.current.revenueTotal ?? 0}
+                previousRevenueTotal={periodComparison?.previous.revenueTotal ?? 0}
+                dealsClosedTotal={periodComparison?.current.dealsClosedTotal ?? 0}
+                previousDealsClosedTotal={periodComparison?.previous.dealsClosedTotal ?? 0}
+                closingRate={periodComparison?.current.closingRate ?? 0}
+                previousClosingRate={periodComparison?.previous.closingRate ?? 0}
+              />
+            </div>
+            <div className="xl:col-span-3">
+              <PodiumCard ranking={sortedRanking.slice(0, 8)} activeMetric={activeRankingMetric} />
+            </div>
+
+            <div className="xl:col-span-9">
+              <KpiGrid summary={data.summary} />
+            </div>
+            <div className="space-y-6 xl:col-span-3">
+              <ProgressCard
+                showUpRate={data.summary.showUpRate}
+                closingRate={data.summary.closingRate}
+                appointmentsDone={data.summary.appointmentsDone}
+                dealsClosed={data.summary.dealsClosed}
+              />
+              <Card>
+                <CardContent className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Venditori attivi
+                  </p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-950">
+                    {isLoadingSellers ? "..." : sellers.length}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    La gestione completa dei venditori ora e separata nella pagina dedicata.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          <LeaderboardTable
+            ref={leaderboardRef}
+            rows={sortedRanking}
+            activeMetric={activeRankingMetric}
+            onMetricChange={setActiveRankingMetric}
+          />
+        </div>
+      ) : null}
     </main>
   );
 }
