@@ -10,7 +10,7 @@ import {
   buildStructuredAssistantFallback,
   generateAssistantAnswer
 } from "@/lib/assistant-insights";
-import { openai, OPENAI_MODEL } from "@/lib/openai";
+import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
 import { AssistantReply, AssistantStructuredReply, DashboardResponse } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const openai = getOpenAIClient();
     const response = await openai.responses.create({
       model: OPENAI_MODEL,
       input: [
