@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
 import {
   Download,
+  ExternalLink,
   House,
   LayoutGrid,
   LoaderCircle,
@@ -41,6 +42,7 @@ function SidebarLink({
   icon: Icon,
   isActive,
   isPending,
+  external = false,
   onClick
 }: {
   href: string;
@@ -48,21 +50,45 @@ function SidebarLink({
   icon: typeof LayoutGrid;
   isActive: boolean;
   isPending: boolean;
+  external?: boolean;
   onClick?: () => void;
 }) {
+  const content = (
+    <>
+      {isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
+      <span className="flex-1 text-left">{label}</span>
+      {external ? <ExternalLink className="h-3.5 w-3.5 opacity-70" /> : null}
+    </>
+  );
+
+  const className = cn(
+    "flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
+    isActive || isPending
+      ? "bg-primary text-white"
+      : "text-slate-300 hover:bg-white/5 hover:text-white"
+  );
+
+  if (external) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className={className}
+        onClick={onClick}
+      >
+        {content}
+      </a>
+    );
+  }
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
-        isActive || isPending
-          ? "bg-primary text-white"
-          : "text-slate-300 hover:bg-white/5 hover:text-white"
-      )}
+      className={className}
     >
-      {isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
-      <span>{label}</span>
+      {content}
     </button>
   );
 }
@@ -80,7 +106,7 @@ export function AppSidebar({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const sidebarItems = getSidebarItems(role);
-  const menuItems = sidebarItems.slice(0, role === "seller" ? 2 : 3);
+  const menuItems = sidebarItems.slice(0, role === "seller" ? 3 : 3);
   const toolItems = role === "admin" ? sidebarItems.slice(3) : [];
   const initials = displayName
     .split(" ")
@@ -150,11 +176,18 @@ export function AppSidebar({
                   label={item.label}
                   icon={iconMap[item.icon]}
                   isPending={isPending}
+                  external={item.external}
                   isActive={
-                    pathname === item.href ||
+                    (!item.external && pathname === item.href) ||
                     (item.href === "/home" && pathname === "/")
                   }
-                  onClick={() => handleNavigate(item.href, item.label)}
+                  onClick={
+                    item.external
+                      ? () => {
+                          onClose();
+                        }
+                      : () => handleNavigate(item.href, item.label)
+                  }
                 />
               ))}
             </div>

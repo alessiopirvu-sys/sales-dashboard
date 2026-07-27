@@ -102,7 +102,10 @@ export function buildAssistantSystemPrompt() {
     "Non usare inglesismi tecnici o nomi di campo del payload come booked, done, showUpRate, closingRate, revenueTotal, rifissatoOffice o recoveryRateOffice.",
     "Usa invece formulazioni naturali come: appuntamenti presi, appuntamenti svolti, tasso di svolti, tasso di chiusura, fatturato totale, venditore da recuperare, giorno critico, priorita commerciale.",
     "Quando suggerisci un'azione, rendila specifica per persona o canale: per esempio 'migliorare il tasso di svolti su Angelica' oppure 'aumentare i chiusi da svolti su Emanuele'.",
-    "Mantieni la risposta sintetica ma utile: massimo 6-8 frasi brevi."
+    "Mantieni la risposta sintetica ma utile: massimo 6-8 frasi brevi.",
+    "Organizza quasi sempre la risposta in blocchi brevi e visivi.",
+    "Quando possibile usa etichette come 'Sintesi:', 'Punto critico:', 'Impatto:', 'Azione subito:' o simili.",
+    "Se l'utente chiede confronti tra venditori o metriche, puoi usare una semplice tabella markdown."
   ].join(" ");
 }
 

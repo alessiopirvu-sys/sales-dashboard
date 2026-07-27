@@ -2,18 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 import {
   ASSISTANT_PROMPT_VERSION,
-  buildAssistantResponseFormatPrompt,
   buildAssistantUserPrompt,
   buildAssistantSystemPrompt
 } from "@/lib/assistant-openai";
 import {
-  buildStructuredAssistantFallback,
   generateAssistantAnswer
 } from "@/lib/assistant-insights";
 import { toPublicError } from "@/lib/auth/errors";
 import { requireAdmin } from "@/lib/auth/session";
 import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
-import { AssistantReply, AssistantStructuredReply, DashboardResponse } from "@/lib/types";
+import { AssistantReply, DashboardResponse } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -34,29 +32,12 @@ type AssistantRequestPayload = {
 function buildFallbackReply(prompt: string, data: DashboardResponse): AssistantReply {
   return {
     answer: generateAssistantAnswer(prompt, data),
-    source: "fallback",
-    structured: buildStructuredAssistantFallback(prompt, data)
+    source: "fallback"
   };
 }
 
-function parseStructuredReply(content: string): AssistantStructuredReply | null {
-  try {
-    const parsed = JSON.parse(content) as AssistantStructuredReply;
-    if (
-      !parsed ||
-      typeof parsed.headline !== "string" ||
-      typeof parsed.summary !== "string" ||
-      !Array.isArray(parsed.sections) ||
-      !Array.isArray(parsed.metrics) ||
-      !Array.isArray(parsed.sellerRows)
-    ) {
-      return null;
-    }
-
-    return parsed;
-  } catch {
-    return null;
-  }
+function chunkTextForStreaming(text: string) {
+  return text.match(/.{1,18}(\s|$)/g) ?? [text];
 }
 
 export async function POST(request: NextRequest) {
@@ -83,65 +64,111 @@ export async function POST(request: NextRequest) {
       sellerCount: data.meta.availableSellers.length
     });
     const cached = assistantReplyCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) {
-      return NextResponse.json(cached.payload, {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-store, max-age=0"
-        }
-      });
-    }
+    const encoder = new TextEncoder();
 
-    const openai = getOpenAIClient();
-    const response = await openai.responses.create({
-      model: OPENAI_MODEL,
-      input: [
-        {
-          role: "system",
-          content: `${buildAssistantSystemPrompt()} ${buildAssistantResponseFormatPrompt()}`
-        },
-        {
-          role: "user",
-          content: buildAssistantUserPrompt(prompt, data)
+    const stream = new ReadableStream({
+      async start(controller) {
+        const sendEvent = (event: Record<string, unknown>) => {
+          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        };
+
+        const streamCachedReply = async (payload: AssistantReply) => {
+          sendEvent({
+            type: "start",
+            source: payload.source,
+            model: payload.model ?? null
+          });
+
+          for (const chunk of chunkTextForStreaming(payload.answer)) {
+            sendEvent({ type: "delta", delta: chunk });
+          }
+
+          sendEvent({ type: "done" });
+        };
+
+        if (cached && cached.expiresAt > Date.now()) {
+          await streamCachedReply(cached.payload);
+          controller.close();
+          return;
         }
-      ]
+
+        try {
+          const openai = getOpenAIClient();
+          const response = await openai.responses.create({
+            model: OPENAI_MODEL,
+            stream: true,
+            input: [
+              {
+                role: "system",
+                content: buildAssistantSystemPrompt()
+              },
+              {
+                role: "user",
+                content: buildAssistantUserPrompt(prompt, data)
+              }
+            ]
+          });
+
+          let answer = "";
+          let started = false;
+
+          for await (const event of response) {
+            if (event.type !== "response.output_text.delta" || !event.delta) {
+              continue;
+            }
+
+            if (!started) {
+              sendEvent({
+                type: "start",
+                source: "openai",
+                model: OPENAI_MODEL
+              });
+              started = true;
+            }
+
+            answer += event.delta;
+            sendEvent({
+              type: "delta",
+              delta: event.delta
+            });
+          }
+
+          const finalAnswer = answer.trim();
+          if (!finalAnswer) {
+            throw new Error("Empty assistant response.");
+          }
+
+          const payload = {
+            answer: finalAnswer,
+            source: "openai",
+            model: OPENAI_MODEL
+          } satisfies AssistantReply;
+
+          assistantReplyCache.set(cacheKey, {
+            payload,
+            expiresAt: Date.now() + ASSISTANT_CACHE_TTL_MS
+          });
+
+          sendEvent({ type: "done" });
+        } catch {
+          const payload = buildFallbackReply(prompt, data);
+
+          assistantReplyCache.set(cacheKey, {
+            payload,
+            expiresAt: Date.now() + ASSISTANT_CACHE_TTL_MS
+          });
+
+          await streamCachedReply(payload);
+        } finally {
+          controller.close();
+        }
+      }
     });
 
-    const answer = response.output_text?.trim();
-    if (!answer) {
-      return NextResponse.json(buildFallbackReply(prompt, data), {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-store, max-age=0"
-        }
-      });
-    }
-
-    const structured = parseStructuredReply(answer);
-    if (!structured) {
-      return NextResponse.json(buildFallbackReply(prompt, data), {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-store, max-age=0"
-        }
-      });
-    }
-
-    const payload = {
-      answer: structured.summary,
-      source: "openai",
-      model: OPENAI_MODEL,
-      structured
-    } satisfies AssistantReply;
-
-    assistantReplyCache.set(cacheKey, {
-      payload,
-      expiresAt: Date.now() + ASSISTANT_CACHE_TTL_MS
-    });
-
-    return NextResponse.json(payload, {
+    return new NextResponse(stream, {
       status: 200,
       headers: {
+        "Content-Type": "application/x-ndjson; charset=utf-8",
         "Cache-Control": "no-store, max-age=0"
       }
     });

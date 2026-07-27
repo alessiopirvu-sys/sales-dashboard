@@ -40,6 +40,7 @@ export type SidebarItem = {
   href: string;
   label: string;
   icon: "home" | "dashboard" | "users" | "download";
+  external?: boolean;
 };
 
 export function isPublicAuthPath(pathname: string) {
@@ -103,7 +104,13 @@ export function getSidebarItems(role: AppRole): SidebarItem[] {
   if (role === "seller") {
     return [
       { href: "/area-venditore", label: "Area venditore", icon: "home" },
-      { href: "/area-venditore/kpi", label: "KPI", icon: "dashboard" }
+      { href: "/area-venditore/kpi", label: "KPI", icon: "dashboard" },
+      {
+        href: "https://team-sales-xi.vercel.app/#inserimenti",
+        label: "Team Sales",
+        icon: "users",
+        external: true
+      }
     ];
   }
 
