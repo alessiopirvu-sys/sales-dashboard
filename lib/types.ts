@@ -204,7 +204,7 @@ export type DashboardResponse = {
   };
   meta: {
     lastUpdated: string;
-    source: SheetsReadMode | "multi" | "mock";
+    source: SheetsReadMode | "multi" | "mock" | "internal_supabase";
     availableSellers: string[];
     totalRows: number;
   };
@@ -216,18 +216,24 @@ export type DashboardResponse = {
 export type SellerRecord = {
   id: string;
   name: string;
-  sheet_url: string;
+  sheet_url: string | null;
   sheets: SellerSheetsMap | null;
   sheet_url_april: string | null;
   sheet_url_may: string | null;
   is_active: boolean;
+  profile_id?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  status?: string | null;
+  last_login_at?: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export type SellerInput = {
   name: string;
-  sheetUrl: string;
+  sheetUrl: string | null;
   sheets?: SellerSheetsMap;
 };
 

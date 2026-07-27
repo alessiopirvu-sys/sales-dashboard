@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  getDuplicateSellerSheetError,
-  INVALID_SHEETS_CSV_MESSAGE,
-  isValidGoogleSheetsCsvUrl
-} from "@/lib/google-sheets-url";
-import {
-  buildSellerSheetsPayload,
-  getFirstSellerSheetUrl,
-  getSellerSheetsMap
-} from "@/lib/seller-sheets";
-import { supabaseServer } from "@/lib/supabase/server";
-import { SellerSheetsMap } from "@/lib/types";
+import { randomUUID } from "crypto";
+
+import { AppError, toPublicError } from "@/lib/auth/errors";
+import { syncSellerPlatformAccess } from "@/lib/auth/admin-seller";
+import { requireAdmin } from "@/lib/auth/session";
+import { buildSellerSheetsPayload } from "@/lib/seller-sheets";
+import { isSellerAccessConfigurationEmpty, sellerUpsertRequestSchema } from "@/lib/sellers/access";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -41,6 +37,16 @@ function getErrorMessage(error: unknown, fallback: string) {
       return "Manca la colonna sheet_url_april nel database. Esegui la nuova migration di Supabase.";
     }
 
+    if (
+      message.includes("profile_id") ||
+      message.includes("last_login_at") ||
+      message.includes("first_name") ||
+      message.includes("last_name") ||
+      message.includes("status")
+    ) {
+      return "Le colonne per l'accesso piattaforma dei venditori non sono ancora presenti nel database. Applica prima le migration auth/Supabase.";
+    }
+
     return message;
   }
 
@@ -48,82 +54,66 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 export async function GET() {
-  const { data, error } = await supabaseServer
+  try {
+    const context = await requireAdmin();
+    const supabase = context.isDevMode ? getSupabaseAdmin() : context.supabase;
+    const { data, error } = await supabase
     .from("sellers")
-    .select("*")
+    .select(
+      "id,name,sheet_url,sheets,sheet_url_april,sheet_url_may,is_active,profile_id,first_name,last_name,email,status,last_login_at,created_at,updated_at"
+    )
     .order("created_at", { ascending: false });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  const rawSellers = data ?? [];
-  const sellers = rawSellers.map((seller) => ({
-    ...seller,
-    sheets: getSellerSheetsMap(seller)
-  }));
-
-  const sellersToMigrate = sellers.filter(
-    (seller) =>
-      JSON.stringify(buildSellerSheetsPayload(rawSellers.find((rawSeller) => rawSeller.id === seller.id)?.sheets)) !==
-      JSON.stringify(buildSellerSheetsPayload(seller.sheets))
-  );
-
-  if (sellersToMigrate.length > 0) {
-    await Promise.allSettled(
-      sellersToMigrate.map((seller) =>
-        supabaseServer.from("sellers").update({ sheets: buildSellerSheetsPayload(seller.sheets) }).eq("id", seller.id)
-      )
-    );
-  }
-
-  return NextResponse.json(
-    { sellers },
-    {
-      headers: {
-        "Cache-Control": "no-store, max-age=0"
-      }
+    if (error) {
+      throw new AppError("INTERNAL_ERROR", error.message);
     }
-  );
+
+    const rawSellers = (data ?? []).filter(
+      (seller) => typeof seller.name === "string" && !seller.name.startsWith("[archived] ")
+    );
+    const sellers = rawSellers.map((seller) => ({
+      ...seller,
+      sheets: {}
+    }));
+
+    return NextResponse.json(
+      { sellers },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0"
+        }
+      }
+    );
+  } catch (error) {
+    const response = toPublicError(error, "Impossibile caricare i venditori.");
+    return NextResponse.json(response.body, { status: response.status });
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const context = await requireAdmin();
+    const supabase = context.isDevMode ? getSupabaseAdmin() : context.supabase;
     const body = await req.json();
-    const name = body?.name?.trim();
-    const sheets = buildSellerSheetsPayload(body?.sheets as SellerSheetsMap | undefined);
-    const sheetUrl = getFirstSellerSheetUrl(sheets);
+    const parsed = sellerUpsertRequestSchema.safeParse(body);
 
-    if (!name || !sheetUrl) {
-      return NextResponse.json(
-        { error: "Name and at least one monthly sheet are required" },
-        { status: 400 }
-      );
+    if (!parsed.success) {
+      throw new AppError("VALIDATION_ERROR", parsed.error.issues[0]?.message ?? "Dati venditore non validi.");
     }
 
-    for (const [key, url] of Object.entries(sheets)) {
-      if (!isValidGoogleSheetsCsvUrl(url)) {
-        return NextResponse.json(
-          { error: `Il link del foglio ${key} non e valido.` },
-          { status: 400 }
-        );
-      }
+    const name = parsed.data.name.trim();
+    const sheets = buildSellerSheetsPayload(parsed.data.sheets);
+
+    if (!name) {
+      return NextResponse.json({ error: "Il nome del venditore e obbligatorio." }, { status: 400 });
     }
 
-    const duplicateSheetError = getDuplicateSellerSheetError([
-      ...Object.entries(sheets).map(([key, url]) => ({ label: key, url }))
-    ]);
-
-    if (duplicateSheetError) {
-      return NextResponse.json({ error: duplicateSheetError }, { status: 400 });
-    }
-
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from("sellers")
       .insert([
         {
           name,
-          sheet_url: sheetUrl,
+          sheet_url: `internal://${randomUUID()}`,
           sheets,
           is_active: true
         }
@@ -135,11 +125,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    try {
+      if (parsed.data.access && !isSellerAccessConfigurationEmpty(parsed.data.access)) {
+        await syncSellerPlatformAccess(data.id, context.profile.id, name, parsed.data.access);
+      }
+    } catch (error) {
+      await supabase.from("sellers").delete().eq("id", data.id);
+      throw error;
+    }
+
     return NextResponse.json({ seller: data });
   } catch (error) {
-    return NextResponse.json(
-      { error: getErrorMessage(error, "Unexpected server error") },
-      { status: 500 }
-    );
+    if (process.env.NODE_ENV === "development") {
+      console.info("[api/sellers][POST] request rejected", {
+        error: error instanceof Error ? error.message : "unknown"
+      });
+    }
+    const response = toPublicError(error, getErrorMessage(error, "Unexpected server error"));
+    return NextResponse.json(response.body, { status: response.status });
   }
 }

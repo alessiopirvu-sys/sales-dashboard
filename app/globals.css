@@ -51,4 +51,29 @@
     border-radius: 9999px;
     background: rgba(148, 163, 184, 0.8);
   }
+
+  .kpi-scrollbar {
+    scrollbar-width: auto;
+    scrollbar-color: rgba(203, 213, 225, 0.95) rgba(241, 245, 249, 0.95);
+  }
+
+  .kpi-scrollbar::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  .kpi-scrollbar::-webkit-scrollbar-track {
+    background: rgba(241, 245, 249, 0.95);
+    border-radius: 9999px;
+  }
+
+  .kpi-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(203, 213, 225, 0.95);
+    border-radius: 9999px;
+    border: 2px solid rgba(241, 245, 249, 0.95);
+  }
+
+  .kpi-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(186, 197, 212, 0.95);
+  }
 }

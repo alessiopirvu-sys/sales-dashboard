@@ -1,66 +1,107 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
 import {
   Download,
   House,
   LayoutGrid,
-  LogOut,
+  LoaderCircle,
   Menu,
   Users
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/layout/LogoutButton";
+import { DevModeRoleSwitcher } from "@/components/layout/DevModeRoleSwitcher";
+import { getSidebarItems } from "@/lib/auth/navigation";
+import { AppRole } from "@/lib/internal-kpi/types";
 import { cn } from "@/lib/utils";
 
 type AppSidebarProps = {
+  role: AppRole;
+  displayName: string;
+  roleLabel: string;
+  devMode: boolean;
   open: boolean;
   onClose: () => void;
+  onNavigateStart?: (label: string) => void;
 };
 
-const menuItems = [
-  { href: "/home", label: "Home", icon: House },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-  { href: "/venditori", label: "Venditori", icon: Users }
-];
-
-const toolItems = [
-  { href: "/esportazioni", label: "Esportazioni", icon: Download }
-];
+const iconMap = {
+  home: House,
+  dashboard: LayoutGrid,
+  users: Users,
+  download: Download
+} as const;
 
 function SidebarLink({
   href,
   label,
   icon: Icon,
   isActive,
+  isPending,
   onClick
 }: {
   href: string;
   label: string;
   icon: typeof LayoutGrid;
   isActive: boolean;
+  isPending: boolean;
   onClick?: () => void;
 }) {
   return (
-    <Link
-      href={href}
+    <button
+      type="button"
       onClick={onClick}
       className={cn(
-        "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
-        isActive
+        "flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors",
+        isActive || isPending
           ? "bg-primary text-white"
           : "text-slate-300 hover:bg-white/5 hover:text-white"
       )}
     >
-      <Icon className="h-4 w-4" />
+      {isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
       <span>{label}</span>
-    </Link>
+    </button>
   );
 }
 
-export function AppSidebar({ open, onClose }: AppSidebarProps) {
+export function AppSidebar({
+  role,
+  displayName,
+  roleLabel,
+  devMode,
+  open,
+  onClose,
+  onNavigateStart
+}: AppSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const sidebarItems = getSidebarItems(role);
+  const menuItems = sidebarItems.slice(0, role === "seller" ? 2 : 3);
+  const toolItems = role === "admin" ? sidebarItems.slice(3) : [];
+  const initials = displayName
+    .split(" ")
+    .map((chunk) => chunk[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const handleNavigate = (href: string, label: string) => {
+    if (pathname === href || (href === "/home" && pathname === "/")) {
+      onClose();
+      return;
+    }
+
+    onNavigateStart?.(label);
+    onClose();
+
+    startTransition(() => {
+      router.push(href);
+    });
+  };
 
   return (
     <>
@@ -107,54 +148,61 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
                   key={item.label}
                   href={item.href}
                   label={item.label}
-                  icon={item.icon}
+                  icon={iconMap[item.icon]}
+                  isPending={isPending}
                   isActive={
                     pathname === item.href ||
                     (item.href === "/home" && pathname === "/")
                   }
-                  onClick={onClose}
+                  onClick={() => handleNavigate(item.href, item.label)}
                 />
               ))}
             </div>
           </section>
 
-          <section>
-            <p className="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Strumenti
-            </p>
-            <div className="mt-3 space-y-2">
-              {toolItems.map((item) => (
-                <SidebarLink
-                  key={item.label}
-                  href={item.href}
-                  label={item.label}
-                  icon={item.icon}
-                  isActive={pathname === item.href}
-                  onClick={onClose}
-                />
-              ))}
-            </div>
-          </section>
+          {toolItems.length > 0 ? (
+            <section>
+              <p className="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Strumenti
+              </p>
+              <div className="mt-3 space-y-2">
+                {toolItems.map((item) => (
+                  <SidebarLink
+                    key={item.label}
+                    href={item.href}
+                    label={item.label}
+                    icon={iconMap[item.icon]}
+                    isPending={isPending}
+                    isActive={pathname === item.href}
+                    onClick={() => handleNavigate(item.href, item.label)}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
 
         <div className="border-t border-white/10 p-4">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+            {devMode ? (
+              <div className="mb-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-300">DEV MODE</p>
+                <p className="mt-1 text-xs text-amber-100">Autenticazione simulata</p>
+                <DevModeRoleSwitcher currentRole={role} />
+              </div>
+            ) : null}
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary font-semibold text-white">
-                D
+                {initials || "U"}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">Daniele</p>
-                <p className="truncate text-xs text-slate-400">Super Admin</p>
+                <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+                <p className="truncate text-xs text-slate-400">{roleLabel}</p>
               </div>
             </div>
-            <Button
-              variant="secondary"
+            <LogoutButton
               className="mt-4 h-10 w-full justify-center border-white/10 bg-white/5 text-slate-200 hover:bg-white/10 hover:text-white"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
+            />
           </div>
         </div>
       </aside>

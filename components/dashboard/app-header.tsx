@@ -6,7 +6,7 @@ type AppHeaderProps = {
   title: string;
   subtitle: string;
   lastUpdatedLabel: string;
-  onExport: () => void;
+  onExport?: () => void;
 };
 
 export function AppHeader({
@@ -28,12 +28,14 @@ export function AppHeader({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-stretch gap-3 sm:items-center lg:justify-end lg:flex-nowrap">
-        <Button variant="secondary" onClick={onExport} className="h-11 rounded-2xl px-5 max-sm:w-full">
-          <ArrowDownToLine className="mr-2 h-4 w-4" />
-          Export
-        </Button>
-      </div>
+      {onExport ? (
+        <div className="flex flex-wrap items-stretch gap-3 sm:items-center lg:justify-end lg:flex-nowrap">
+          <Button variant="secondary" onClick={onExport} className="h-11 rounded-2xl px-5 max-sm:w-full">
+            <ArrowDownToLine className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

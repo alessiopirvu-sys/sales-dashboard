@@ -10,6 +10,8 @@ import {
   buildStructuredAssistantFallback,
   generateAssistantAnswer
 } from "@/lib/assistant-insights";
+import { toPublicError } from "@/lib/auth/errors";
+import { requireAdmin } from "@/lib/auth/session";
 import { getOpenAIClient, OPENAI_MODEL } from "@/lib/openai";
 import { AssistantReply, AssistantStructuredReply, DashboardResponse } from "@/lib/types";
 
@@ -59,6 +61,7 @@ function parseStructuredReply(content: string): AssistantStructuredReply | null 
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin();
     const body = (await request.json()) as AssistantRequestPayload;
     const prompt = body.prompt?.trim();
     const data = body.data;
@@ -143,9 +146,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Errore durante la risposta dell'assistente.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    const response = toPublicError(error, "Errore durante la risposta dell'assistente.");
+    return NextResponse.json(response.body, { status: response.status });
   }
 }

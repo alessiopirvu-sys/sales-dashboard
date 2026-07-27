@@ -200,8 +200,10 @@ export function SellersPage() {
                       <TableRow>
                         <TableHead>Venditore</TableHead>
                         <TableHead>Stato</TableHead>
+                        <TableHead>Accesso</TableHead>
                         <TableHead>Fogli collegati</TableHead>
                         <TableHead>Ultimo mese</TableHead>
+                        <TableHead>Ultimo accesso</TableHead>
                         <TableHead className="text-right">Azioni</TableHead>
                       </TableRow>
                   </TableHeader>
@@ -234,10 +236,34 @@ export function SellersPage() {
                                 {seller.is_active ? "Attivo" : "Inattivo"}
                               </Badge>
                             </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="secondary"
+                                className={seller.profile_id ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}
+                              >
+                                {seller.profile_id ? seller.status ?? "Collegato" : "Da invitare"}
+                              </Badge>
+                            </TableCell>
                             <TableCell>{sheetEntries.length}</TableCell>
                             <TableCell>{latestMonth?.label ?? "Nessuno"}</TableCell>
                             <TableCell>
+                              {seller.last_login_at
+                                ? new Date(seller.last_login_at).toLocaleDateString("it-IT")
+                                : "Mai"}
+                            </TableCell>
+                            <TableCell>
                               <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  className="rounded-xl"
+                                  onClick={() => {
+                                    setEditingSeller(seller);
+                                    setIsSellerModalOpen(true);
+                                  }}
+                                >
+                                  Accesso
+                                </Button>
                                 <Button
                                   variant="secondary"
                                   size="sm"
@@ -279,7 +305,7 @@ export function SellersPage() {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="h-28 text-center text-slate-500">
+                        <TableCell colSpan={7} className="h-28 text-center text-slate-500">
                           Nessun venditore trovato con i filtri attivi.
                         </TableCell>
                       </TableRow>
@@ -314,6 +340,12 @@ export function SellersPage() {
                             <p className="mt-1 text-sm text-slate-500">
                               Ultimo mese: {latestMonth?.label ?? "Nessuno"}
                             </p>
+                            <p className="mt-1 text-sm text-slate-500">
+                              Accesso: {seller.profile_id ? seller.status ?? "Collegato" : "Da invitare"}
+                            </p>
+                            <p className="mt-1 text-sm text-slate-500">
+                              Ultimo accesso: {seller.last_login_at ? new Date(seller.last_login_at).toLocaleDateString("it-IT") : "Mai"}
+                            </p>
                           </div>
                           <button
                             type="button"
@@ -344,6 +376,17 @@ export function SellersPage() {
                         ) : null}
 
                         <div className="mt-4 flex flex-wrap gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="rounded-xl"
+                            onClick={() => {
+                              setEditingSeller(seller);
+                              setIsSellerModalOpen(true);
+                            }}
+                          >
+                            Accesso
+                          </Button>
                           <Button
                             variant="secondary"
                             size="sm"

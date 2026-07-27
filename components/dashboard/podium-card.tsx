@@ -43,43 +43,50 @@ export function PodiumCard({ ranking, activeMetric }: PodiumCardProps) {
       </CardHeader>
       <CardContent className="h-auto md:h-[364px]">
         {ranking.length > 0 ? (
-          <div className="subtle-scrollbar flex flex-col gap-3 md:h-full md:overflow-y-auto md:pr-1">
+          <div className="subtle-scrollbar flex flex-col gap-2.5 md:h-full md:overflow-y-auto md:pr-0.5">
             {ranking.map((row, index) => {
               const isTopThree = index < 3;
 
               return (
                 <div
                   key={row.seller}
-                  className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white px-3.5 py-3 sm:px-4"
+                  className="grid min-h-[78px] grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-x-2.5 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 sm:min-h-[80px] sm:px-3.5"
                 >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                        isTopThree ? badgeTones[index] : "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {isTopThree ? badges[index] : index + 1}
-                    </div>
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-900">
+                  <div
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+                      isTopThree ? badgeTones[index] : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {isTopThree ? badges[index] : index + 1}
+                  </div>
+
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-900 sm:h-10 sm:w-10">
                       {initials(row.seller)}
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">{row.seller}</p>
-                      <p className="mt-1 text-[11px] text-slate-500 sm:text-xs">{metric.tableLabel}</p>
+                    <div className="min-w-0 overflow-hidden">
+                      <p className="truncate whitespace-nowrap text-[13px] font-semibold leading-5 text-slate-900 sm:text-sm">
+                        {row.seller}
+                      </p>
+                      <p className="truncate whitespace-nowrap text-[11px] leading-4 text-slate-500">
+                        {metric.tableLabel}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="shrink-0 text-right">
-                    <p className="text-sm font-semibold text-slate-900">
+                  <div className="min-w-0 shrink-0 text-right">
+                    <p className="whitespace-nowrap text-[13px] font-semibold leading-5 text-slate-900 sm:text-sm">
                       {metric.format(metric.getValue(row))}
                     </p>
                     {isTopThree ? (
-                      <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-                        <Medal className="h-3 w-3 text-primary" />
+                      <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] leading-4 text-slate-600">
+                        <Medal className="h-3 w-3 shrink-0 text-primary" />
                         {index + 1}° posto
                       </div>
                     ) : (
-                      <p className="mt-1 text-xs text-slate-500">{metric.tableLabel}</p>
+                      <p className="mt-1 whitespace-nowrap text-[11px] leading-4 text-slate-500">
+                        {index + 1}° posto
+                      </p>
                     )}
                   </div>
                 </div>

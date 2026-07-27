@@ -281,6 +281,11 @@ export async function fetchAndParseSellerSheet(
 ): Promise<{ rows: NormalizedSalesRow[]; debug: SellerSheetDebug }> {
   const sheetUrl = options?.sheetUrl ?? seller.sheet_url;
   const sourceLabel = options?.sourceLabel ?? "Principale";
+
+  if (!sheetUrl) {
+    throw new Error(`Nessun foglio Google Sheets configurato per ${seller.name}.`);
+  }
+
   const cacheKey = buildParsedSheetCacheKey(
     seller.id,
     sheetUrl,

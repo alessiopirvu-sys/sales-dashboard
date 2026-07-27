@@ -1,4 +1,5 @@
 .next
+.next_cache_check
 node_modules
 .vercel
 .env.local
@@ -7,3 +8,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-lock.yaml
 package-lock.json
+.DS_Store
+test-results
+tsconfig.tsbuildinfo

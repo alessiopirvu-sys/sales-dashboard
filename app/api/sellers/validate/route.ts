@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireAdmin } from "@/lib/auth/session";
 import { INVALID_SHEETS_CSV_MESSAGE, isValidGoogleSheetsCsvUrl } from "@/lib/google-sheets-url";
 import { validateSellerSheetUrl } from "@/lib/sheets-csv";
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin();
     const payload = (await request.json()) as { sheetUrl?: string };
 
     if (!payload.sheetUrl?.trim()) {

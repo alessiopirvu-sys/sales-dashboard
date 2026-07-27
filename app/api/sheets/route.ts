@@ -14,6 +14,8 @@ import {
   calculateSummaryMetrics
 } from "@/lib/kpi";
 import { normalizeCell, normalizeRowsFromSheet } from "@/lib/normalize";
+import { toPublicError } from "@/lib/auth/errors";
+import { requireAdmin } from "@/lib/auth/session";
 import { DashboardFilters, RawSheetRow, SheetSourceConfig } from "@/lib/types";
 
 const PUBLISHED_CSV_URL =
@@ -97,6 +99,7 @@ function filterRowsByRange(
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAdmin();
     const filters = parseFiltersFromSearchParams(request.nextUrl.searchParams);
     const rawRows = await fetchPublishedCsvRows();
     const normalizedRows = normalizeRowsFromSheet(rawRows, sheetSource);
@@ -158,8 +161,7 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Errore durante il caricamento del foglio.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const response = toPublicError(error, "Errore durante il caricamento del foglio.");
+    return NextResponse.json(response.body, { status: response.status });
   }
 }
