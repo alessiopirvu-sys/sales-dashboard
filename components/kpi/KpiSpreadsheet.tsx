@@ -116,18 +116,18 @@ export function KpiSpreadsheet({ sellerName }: Props) {
         setSelectedCell({ rowIndex: 0, columnIndex: 1 });
         setSelectionEnd({ rowIndex: 0, columnIndex: 1 });
         setSaveState("saved");
+        isHydratingRef.current = false;
       } catch {
         if (!isActive) {
           return;
         }
 
+        // Keep isHydratingRef true so the autosave effect stays disabled: we don't know
+        // the real state of this period, so we must not let a blank grid get upserted
+        // over whatever data already exists on the server.
         setRows(buildBaseSpreadsheetRows(selectedYear, selectedMonth));
         setPeriodStatus("open");
         setSaveState("error");
-      } finally {
-        if (isActive) {
-          isHydratingRef.current = false;
-        }
       }
     };
 
