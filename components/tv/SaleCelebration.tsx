@@ -1,7 +1,6 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import confetti from "canvas-confetti";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { PartyPopper, Volume2, VolumeX } from "lucide-react";
 
 import { formatCurrency } from "@/lib/formatters";
@@ -16,17 +15,49 @@ const DISPLAY_MS = 10000;
 
 const CELEBRATION_SOUND_URL = "/sounds/celebration.mp3";
 
-function fireConfetti() {
-  const colors = ["#7C3AED", "#A78BFA", "#F59E0B", "#2563EB", "#ffffff"];
-  const end = Date.now() + 1400;
+const CONFETTI_COLORS = ["#7C3AED", "#A78BFA", "#F59E0B", "#2563EB", "#ffffff"];
+const CONFETTI_PIECE_COUNT = 60;
 
-  (function frame() {
-    confetti({ particleCount: 4, angle: 60, spread: 60, origin: { x: 0, y: 0.4 }, colors, startVelocity: 55 });
-    confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1, y: 0.4 }, colors, startVelocity: 55 });
-    if (Date.now() < end) requestAnimationFrame(frame);
-  })();
+// Coriandoli in puro CSS/DOM (niente canvas-confetti): il browser TV che
+// mostra questa pagina puo' avere un motore JS molto vecchio, meglio
+// restare su animazioni CSS di base che funzionano ovunque.
+function ConfettiOverlay({ pieceKey }: { pieceKey: number }) {
+  const pieces = useMemo(
+    () =>
+      Array.from({ length: CONFETTI_PIECE_COUNT }, (_, index) => ({
+        id: index,
+        left: Math.random() * 100,
+        color: CONFETTI_COLORS[index % CONFETTI_COLORS.length],
+        delay: Math.random() * 0.6,
+        duration: 2.6 + Math.random() * 1.6,
+        size: 6 + Math.random() * 8,
+        rotate: Math.random() * 360
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pieceKey]
+  );
 
-  confetti({ particleCount: 120, spread: 100, origin: { y: 0.5 }, colors, startVelocity: 45, ticks: 200 });
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {pieces.map((piece) => (
+        <span
+          key={piece.id}
+          className="absolute top-[-5%] block animate-[confettiFall_var(--confetti-duration)_ease-in_var(--confetti-delay)_1]"
+          style={
+            {
+              left: `${piece.left}%`,
+              width: piece.size,
+              height: piece.size * 0.6,
+              backgroundColor: piece.color,
+              transform: `rotate(${piece.rotate}deg)`,
+              "--confetti-duration": `${piece.duration}s`,
+              "--confetti-delay": `${piece.delay}s`
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
 }
 
 export const SaleCelebration = forwardRef<SaleCelebrationHandle>(function SaleCelebration(_props, ref) {
@@ -37,8 +68,12 @@ export const SaleCelebration = forwardRef<SaleCelebrationHandle>(function SaleCe
   const idRef = useRef(0);
 
   useEffect(() => {
-    audioRef.current = new Audio(CELEBRATION_SOUND_URL);
-    audioRef.current.preload = "auto";
+    try {
+      audioRef.current = new Audio(CELEBRATION_SOUND_URL);
+      audioRef.current.preload = "auto";
+    } catch {
+      // Se l'API Audio non e' disponibile su questo browser, niente suono ma il resto funziona.
+    }
   }, []);
 
   // Il browser blocca l'audio finche' non c'e' un click reale dell'utente:
@@ -66,7 +101,6 @@ export const SaleCelebration = forwardRef<SaleCelebrationHandle>(function SaleCe
       return;
     }
     setCurrent(next);
-    fireConfetti();
     const audio = audioRef.current;
     if (audio) {
       audio.currentTime = 0;
@@ -92,7 +126,7 @@ export const SaleCelebration = forwardRef<SaleCelebrationHandle>(function SaleCe
       <button
         type="button"
         onClick={enableAudio}
-        className="fixed bottom-5 right-5 z-[110] flex items-center gap-2 rounded-full bg-slate-950/80 px-4 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm"
+        className="fixed bottom-5 right-5 z-[110] flex items-center gap-2 rounded-full bg-slate-950/80 px-4 py-2.5 text-sm font-semibold text-white shadow-lg"
       >
         {isAudioUnlocked ? <Volume2 className="h-4 w-4 text-emerald-400" /> : <VolumeX className="h-4 w-4 text-rose-400" />}
         {isAudioUnlocked ? "Audio attivo" : "Attiva audio"}
@@ -100,6 +134,7 @@ export const SaleCelebration = forwardRef<SaleCelebrationHandle>(function SaleCe
 
       {current ? (
         <div className="pointer-events-none fixed inset-0 z-[100] overflow-hidden">
+          <ConfettiOverlay pieceKey={current.id} />
           <div className="flex h-full items-center justify-center">
             <div className="animate-[celebrationPop_0.4s_ease-out] rounded-[2.5rem] bg-white px-24 py-16 text-center shadow-[0_48px_96px_-24px_rgba(88,28,135,0.5)]">
               <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-primary/10">
