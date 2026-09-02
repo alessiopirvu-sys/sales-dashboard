@@ -1,5 +1,7 @@
 "use client";
 
+import "@/lib/polyfills/resize-observer";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";

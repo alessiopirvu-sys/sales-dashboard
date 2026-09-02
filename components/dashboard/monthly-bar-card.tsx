@@ -1,5 +1,7 @@
 "use client";
 
+import "@/lib/polyfills/resize-observer";
+
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -36,6 +36,7 @@ const nextConfig = {
     "date-fns",
     "tailwind-merge",
     "cookie",
+    "resize-observer-polyfill",
     "@radix-ui/number",
     "@radix-ui/primitive",
     "@radix-ui/react-arrow",
