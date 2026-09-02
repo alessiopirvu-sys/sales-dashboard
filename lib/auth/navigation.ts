@@ -105,12 +105,7 @@ export function getSidebarItems(role: AppRole): SidebarItem[] {
     return [
       { href: "/area-venditore", label: "Area venditore", icon: "home" },
       { href: "/area-venditore/kpi", label: "KPI", icon: "dashboard" },
-      {
-        href: "https://team-sales-xi.vercel.app/#inserimenti",
-        label: "Team Sales",
-        icon: "users",
-        external: true
-      }
+      { href: "/team-sales", label: "Team Sales", icon: "users" }
     ];
   }
 
@@ -118,7 +113,8 @@ export function getSidebarItems(role: AppRole): SidebarItem[] {
     { href: "/home", label: "Home", icon: "home" },
     { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
     { href: "/venditori", label: "Venditori", icon: "users" },
-    { href: "/esportazioni", label: "Esportazioni", icon: "download" }
+    { href: "/esportazioni", label: "Esportazioni", icon: "download" },
+    { href: "/team-sales", label: "Team Sales", icon: "users" }
   ];
 }
 

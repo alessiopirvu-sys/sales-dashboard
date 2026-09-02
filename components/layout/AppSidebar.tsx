@@ -206,8 +206,15 @@ export function AppSidebar({
                     label={item.label}
                     icon={iconMap[item.icon]}
                     isPending={isPending}
-                    isActive={pathname === item.href}
-                    onClick={() => handleNavigate(item.href, item.label)}
+                    external={item.external}
+                    isActive={!item.external && pathname === item.href}
+                    onClick={
+                      item.external
+                        ? () => {
+                            onClose();
+                          }
+                        : () => handleNavigate(item.href, item.label)
+                    }
                   />
                 ))}
               </div>

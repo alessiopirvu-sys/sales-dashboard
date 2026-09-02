@@ -63,3 +63,12 @@ export function isAdminDevBypassPath(pathname: string) {
 export function isDevRoleSwitchApiPath(pathname: string) {
   return pathname === "/api/auth/dev-role";
 }
+
+export function isDualRoleDevBypassPath(pathname: string) {
+  return (
+    pathname === "/team-sales" ||
+    pathname.startsWith("/team-sales/") ||
+    pathname === "/api/team-sales" ||
+    pathname.startsWith("/api/team-sales/")
+  );
+}

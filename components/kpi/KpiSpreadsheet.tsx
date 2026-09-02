@@ -55,8 +55,7 @@ function getCurrentPeriod() {
 
 export function KpiSpreadsheet({ sellerName }: Props) {
   const currentPeriod = useMemo(() => getCurrentPeriod(), []);
-  const [selectedMonth, setSelectedMonth] = useState(currentPeriod.month);
-  const [selectedYear, setSelectedYear] = useState(currentPeriod.year);
+  const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);
   const [rows, setRows] = useState<InternalKpiDailyRow[]>(() =>
     buildBaseSpreadsheetRows(currentPeriod.year, currentPeriod.month)
   );
@@ -91,8 +90,8 @@ export function KpiSpreadsheet({ sellerName }: Props) {
 
       try {
         const params = new URLSearchParams({
-          year: String(selectedYear),
-          month: String(selectedMonth)
+          year: String(selectedPeriod.year),
+          month: String(selectedPeriod.month)
         });
         const response = await fetch(`/api/seller/kpi-period?${params.toString()}`, {
           cache: "no-store"
@@ -111,7 +110,7 @@ export function KpiSpreadsheet({ sellerName }: Props) {
           return;
         }
 
-        setRows(payload.rows ?? buildBaseSpreadsheetRows(selectedYear, selectedMonth));
+        setRows(payload.rows ?? buildBaseSpreadsheetRows(selectedPeriod.year, selectedPeriod.month));
         setPeriodStatus(payload.status ?? "open");
         setSelectedCell({ rowIndex: 0, columnIndex: 1 });
         setSelectionEnd({ rowIndex: 0, columnIndex: 1 });
@@ -125,7 +124,7 @@ export function KpiSpreadsheet({ sellerName }: Props) {
         // Keep isHydratingRef true so the autosave effect stays disabled: we don't know
         // the real state of this period, so we must not let a blank grid get upserted
         // over whatever data already exists on the server.
-        setRows(buildBaseSpreadsheetRows(selectedYear, selectedMonth));
+        setRows(buildBaseSpreadsheetRows(selectedPeriod.year, selectedPeriod.month));
         setPeriodStatus("open");
         setSaveState("error");
       }
@@ -136,7 +135,7 @@ export function KpiSpreadsheet({ sellerName }: Props) {
     return () => {
       isActive = false;
     };
-  }, [selectedMonth, selectedYear]);
+  }, [selectedPeriod]);
 
   useEffect(() => {
     if (isHydratingRef.current || periodStatus !== "open") {
@@ -155,8 +154,8 @@ export function KpiSpreadsheet({ sellerName }: Props) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            year: selectedYear,
-            month: selectedMonth,
+            year: selectedPeriod.year,
+            month: selectedPeriod.month,
             rows: rows.map((row) => row.input)
           })
         });
@@ -176,7 +175,43 @@ export function KpiSpreadsheet({ sellerName }: Props) {
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [periodStatus, rows, selectedMonth, selectedYear]);
+  }, [periodStatus, rows, selectedPeriod]);
+
+  const selectedMonth = selectedPeriod.month;
+  const selectedYear = selectedPeriod.year;
+
+  const setPeriod = (year: number, month: number) => {
+    isHydratingRef.current = true;
+
+    if (month < 1) {
+      setSelectedPeriod({
+        year: year - 1,
+        month: 12
+      });
+      return;
+    }
+
+    if (month > 12) {
+      setSelectedPeriod({
+        year: year + 1,
+        month: 1
+      });
+      return;
+    }
+
+    setSelectedPeriod({
+      year,
+      month
+    });
+  };
+
+  const goToPreviousMonth = () => {
+    setPeriod(selectedPeriod.year, selectedPeriod.month - 1);
+  };
+
+  const goToNextMonth = () => {
+    setPeriod(selectedPeriod.year, selectedPeriod.month + 1);
+  };
 
   useEffect(() => {
     const handleMouseUp = () => {
@@ -208,23 +243,6 @@ export function KpiSpreadsheet({ sellerName }: Props) {
     if (periodStatus === "open") {
       autosaveControllerRef.current?.notifyChange();
     }
-  };
-
-  const setPeriod = (year: number, month: number) => {
-    if (month < 1) {
-      setSelectedYear(year - 1);
-      setSelectedMonth(12);
-      return;
-    }
-
-    if (month > 12) {
-      setSelectedYear(year + 1);
-      setSelectedMonth(1);
-      return;
-    }
-
-    setSelectedYear(year);
-    setSelectedMonth(month);
   };
 
   const focusPosition = (position: GridCellPosition) => {
@@ -436,8 +454,8 @@ export function KpiSpreadsheet({ sellerName }: Props) {
               year={selectedYear}
               onMonthChange={(month) => setPeriod(selectedYear, month)}
               onYearChange={(year) => setPeriod(year, selectedMonth)}
-              onPreviousMonth={() => setPeriod(selectedYear, selectedMonth - 1)}
-              onNextMonth={() => setPeriod(selectedYear, selectedMonth + 1)}
+              onPreviousMonth={goToPreviousMonth}
+              onNextMonth={goToNextMonth}
             />
 
             <div className="flex flex-wrap items-center gap-2">
@@ -458,7 +476,7 @@ export function KpiSpreadsheet({ sellerName }: Props) {
                 variant="secondary"
                 size="sm"
                 className="h-8 rounded-lg px-3"
-                onClick={() => setPeriod(selectedYear, selectedMonth - 1)}
+                onClick={goToPreviousMonth}
               >
                 Mese precedente
               </Button>
@@ -467,7 +485,7 @@ export function KpiSpreadsheet({ sellerName }: Props) {
                 variant="secondary"
                 size="sm"
                 className="h-8 rounded-lg px-3"
-                onClick={() => setPeriod(selectedYear, selectedMonth + 1)}
+                onClick={goToNextMonth}
               >
                 Mese successivo
               </Button>

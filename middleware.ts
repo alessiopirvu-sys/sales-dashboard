@@ -22,6 +22,7 @@ import {
   isDevAuthBypassEnabled,
   isDevBypassLoginPath,
   isDevRoleSwitchApiPath,
+  isDualRoleDevBypassPath,
   isSellerDevBypassPath
 } from "@/lib/auth/dev-mode";
 
@@ -73,6 +74,10 @@ export async function middleware(request: NextRequest) {
     }
 
     if (isDevRoleSwitchApiPath(pathname)) {
+      return NextResponse.next();
+    }
+
+    if (isDualRoleDevBypassPath(pathname)) {
       return NextResponse.next();
     }
 
@@ -128,7 +133,7 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    if (isApiRequest && (isAdminApiPath(pathname) || isSellerApiPath(pathname))) {
+    if (isApiRequest) {
       return jsonAuthError(401, "UNAUTHENTICATED", "Autenticazione richiesta.");
     }
 

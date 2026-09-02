@@ -38,10 +38,15 @@ describe("auth navigation helpers", () => {
       "Home",
       "Dashboard",
       "Venditori",
-      "Esportazioni"
+      "Esportazioni",
+      "Team Sales"
     ]);
 
-    expect(getSidebarItems("seller").map((item) => item.label)).toEqual(["Area venditore", "KPI"]);
+    expect(getSidebarItems("seller").map((item) => item.label)).toEqual([
+      "Area venditore",
+      "KPI",
+      "Team Sales"
+    ]);
   });
 
   it("riconosce correttamente route admin e seller", () => {
