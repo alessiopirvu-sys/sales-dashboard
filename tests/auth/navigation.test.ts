@@ -39,7 +39,8 @@ describe("auth navigation helpers", () => {
       "Dashboard",
       "Venditori",
       "Esportazioni",
-      "Team Sales"
+      "Team Sales",
+      "Schermo TV"
     ]);
 
     expect(getSidebarItems("seller").map((item) => item.label)).toEqual([

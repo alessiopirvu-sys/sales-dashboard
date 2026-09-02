@@ -61,6 +61,13 @@ function isAllowedDuringForcedPasswordUpdate(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Asset statici pubblici (es. suoni della schermata TV): niente da
+  // proteggere, non servono controlli di autenticazione.
+  if (pathname.startsWith("/sounds/")) {
+    return NextResponse.next();
+  }
+
   const isApiRequest = pathname.startsWith("/api/");
   const devBypassEnabled = isDevAuthBypassEnabled();
   const isPostLoginPath = pathname === "/auth/post-login";

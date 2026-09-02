@@ -56,7 +56,9 @@ export function isAdminDevBypassPath(pathname: string) {
     pathname === "/venditori" ||
     pathname.startsWith("/venditori/") ||
     pathname === "/esportazioni" ||
-    pathname.startsWith("/esportazioni/")
+    pathname.startsWith("/esportazioni/") ||
+    pathname === "/tv" ||
+    pathname.startsWith("/tv/")
   );
 }
 

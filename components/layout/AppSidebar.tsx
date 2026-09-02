@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   LoaderCircle,
   Menu,
+  Tv,
   Users
 } from "lucide-react";
 
@@ -33,7 +34,8 @@ const iconMap = {
   home: House,
   dashboard: LayoutGrid,
   users: Users,
-  download: Download
+  download: Download,
+  tv: Tv
 } as const;
 
 function SidebarLink({

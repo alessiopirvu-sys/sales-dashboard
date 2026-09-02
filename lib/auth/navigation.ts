@@ -21,7 +21,8 @@ export const ADMIN_ROUTE_PREFIXES = [
   "/home",
   "/dashboard",
   "/venditori",
-  "/esportazioni"
+  "/esportazioni",
+  "/tv"
 ];
 
 export const ADMIN_API_PREFIXES = [
@@ -39,7 +40,7 @@ export const SELLER_API_PREFIXES = ["/api/seller"];
 export type SidebarItem = {
   href: string;
   label: string;
-  icon: "home" | "dashboard" | "users" | "download";
+  icon: "home" | "dashboard" | "users" | "download" | "tv";
   external?: boolean;
 };
 
@@ -114,7 +115,8 @@ export function getSidebarItems(role: AppRole): SidebarItem[] {
     { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
     { href: "/venditori", label: "Venditori", icon: "users" },
     { href: "/esportazioni", label: "Esportazioni", icon: "download" },
-    { href: "/team-sales", label: "Team Sales", icon: "users" }
+    { href: "/team-sales", label: "Team Sales", icon: "users" },
+    { href: "/tv", label: "Schermo TV", icon: "tv" }
   ];
 }
 
