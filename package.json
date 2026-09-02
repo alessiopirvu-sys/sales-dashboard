@@ -44,5 +44,11 @@
     "tsx": "^4.20.3",
     "typescript": "^5.7.2",
     "vitest": "^4.1.10"
-  }
+  },
+  "browserslist": [
+    "> 0.1%",
+    "not dead",
+    "not op_mini all",
+    "ie 11"
+  ]
 }
