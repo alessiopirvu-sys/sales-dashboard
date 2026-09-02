@@ -22,7 +22,18 @@ export async function GET() {
       throw new AppError("INTERNAL_ERROR", "Impossibile caricare le squadre Team Sales.");
     }
 
-    return NextResponse.json({ teams: data ?? [] });
+    let myTeamIds: string[] = [];
+    if (context.profile.role === "seller" && context.seller) {
+      const { data: myTeamIdsData, error: myTeamIdsError } = await supabase.rpc(
+        "get_my_team_sales_team_ids",
+        { p_seller_id: context.seller.id }
+      );
+      if (!myTeamIdsError) {
+        myTeamIds = (myTeamIdsData ?? []) as string[];
+      }
+    }
+
+    return NextResponse.json({ teams: data ?? [], myTeamIds });
   } catch (error) {
     const response = toPublicError(error, "Errore durante il caricamento delle squadre.");
     return NextResponse.json(response.body, { status: response.status });

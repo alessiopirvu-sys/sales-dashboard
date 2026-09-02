@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LoaderCircle, Plus, Trash2, TrendingUp, Users } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,17 +14,20 @@ import { TeamSalesOverviewRow } from "@/lib/team-sales/types";
 
 type Team = { id: string; name: string };
 
-function TeamOverviewCard({ row }: { row: TeamSalesOverviewRow }) {
+function TeamOverviewCard({ row, isMyTeam }: { row: TeamSalesOverviewRow; isMyTeam: boolean }) {
   const progress = row.targetTotal > 0 ? row.soldTotal / row.targetTotal : 0;
   const missingToTarget = Math.max(0, row.targetTotal - row.soldTotal);
   const isOnTrack = missingToTarget === 0 && row.targetTotal > 0;
 
   return (
     <Link href={`/team-sales/${row.teamId}`}>
-      <Card className="h-full transition-shadow hover:shadow-float">
+      <Card className={cn("h-full transition-shadow hover:shadow-float", isMyTeam && "ring-2 ring-primary/40")}>
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div>
-            <CardTitle className="text-lg">{row.teamName}</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-lg">{row.teamName}</CardTitle>
+              {isMyTeam ? <Badge>La tua squadra</Badge> : null}
+            </div>
             <p className="text-sm text-slate-500">{row.monthLabel || "Mese non configurato"}</p>
           </div>
           <div
@@ -82,6 +86,7 @@ export function TeamSalesHome({ canCreateTeam }: { canCreateTeam: boolean }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [overview, setOverview] = useState<TeamSalesOverviewRow[]>([]);
   const [isOverviewLoading, setIsOverviewLoading] = useState(true);
+  const [myTeamIds, setMyTeamIds] = useState<string[]>([]);
 
   const load = async () => {
     setIsLoading(true);
@@ -93,6 +98,7 @@ export function TeamSalesHome({ canCreateTeam }: { canCreateTeam: boolean }) {
         throw new Error(payload.message || "Impossibile caricare le squadre.");
       }
       setTeams(payload.teams ?? []);
+      setMyTeamIds(payload.myTeamIds ?? []);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Errore sconosciuto.");
     } finally {
@@ -188,7 +194,7 @@ export function TeamSalesHome({ canCreateTeam }: { canCreateTeam: boolean }) {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {overview.map((row) => (
-              <TeamOverviewCard key={row.teamId} row={row} />
+              <TeamOverviewCard key={row.teamId} row={row} isMyTeam={myTeamIds.includes(row.teamId)} />
             ))}
           </div>
         )}
@@ -257,13 +263,22 @@ export function TeamSalesHome({ canCreateTeam }: { canCreateTeam: boolean }) {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {teams.map((team) => (
-              <Card key={team.id} className="h-full transition-shadow hover:shadow-float">
+              <Card
+                key={team.id}
+                className={cn(
+                  "h-full transition-shadow hover:shadow-float",
+                  myTeamIds.includes(team.id) && "ring-2 ring-primary/40"
+                )}
+              >
                 <CardContent className="flex items-center gap-3 p-5">
                   <Link href={`/team-sales/${team.id}`} className="flex flex-1 items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                       <Users className="h-5 w-5" />
                     </div>
-                    <p className="text-lg font-semibold text-slate-950">{team.name}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-lg font-semibold text-slate-950">{team.name}</p>
+                      {myTeamIds.includes(team.id) ? <Badge>La tua squadra</Badge> : null}
+                    </div>
                   </Link>
                   {canCreateTeam ? (
                     <Button
