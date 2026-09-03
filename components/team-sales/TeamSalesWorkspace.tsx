@@ -418,6 +418,10 @@ function SetupTab({
   );
 
   const handleSave = async () => {
+    const sanitizedSellers = sellers.map((seller) => ({
+      ...seller,
+      target: Number.isNaN(seller.target) ? 0 : seller.target
+    }));
     const next: TeamSalesMonthData = {
       ...data,
       setup: {
@@ -426,8 +430,8 @@ function SetupTab({
         month,
         monthLabel: formatMonthLabel(year, month),
         workingDays: Number(workingDays) || data.setup.workingDays,
-        targetTotal,
-        sellers
+        targetTotal: sanitizedSellers.reduce((sum, seller) => sum + Number(seller.target || 0), 0),
+        sellers: sanitizedSellers
       }
     };
     await onSave(next, "Setup salvato.");
@@ -542,14 +546,16 @@ function SetupTab({
                           <Input
                             type="number"
                             min={0}
-                            value={seller.target}
-                            onChange={(event) =>
+                            value={Number.isNaN(seller.target) ? "" : seller.target}
+                            onChange={(event) => {
+                              const raw = event.target.value;
+                              const parsed = raw === "" ? NaN : Number(raw);
                               setSellers((current) =>
                                 current.map((row, rowIndex) =>
-                                  rowIndex === index ? { ...row, target: Number(event.target.value) } : row
+                                  rowIndex === index ? { ...row, target: parsed } : row
                                 )
-                              )
-                            }
+                              );
+                            }}
                             className="text-right"
                           />
                         ) : (

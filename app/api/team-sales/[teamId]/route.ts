@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { requireActiveProfile, requireAdmin } from "@/lib/auth/session";
 import { AppError, toPublicError } from "@/lib/auth/errors";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { TeamSalesMonthData } from "@/lib/team-sales/types";
+import { createTeamSalesTeamSchema } from "@/lib/team-sales/schemas";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -92,6 +93,42 @@ export async function GET(_request: Request, { params }: RouteParams) {
     return NextResponse.json(result);
   } catch (error) {
     const response = toPublicError(error, "Errore durante il caricamento della squadra.");
+    return NextResponse.json(response.body, { status: response.status });
+  }
+}
+
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const context = await requireAdmin();
+    const supabase = context.isDevMode ? getSupabaseAdmin() : context.supabase;
+    const body = await request.json();
+    const parsed = createTeamSalesTeamSchema.safeParse(body);
+
+    if (!parsed.success) {
+      throw new AppError("VALIDATION_ERROR", parsed.error.issues[0]?.message ?? "Nome squadra non valido.");
+    }
+
+    const { data, error } = await supabase
+      .from("team_sales_teams")
+      .update({ name: parsed.data.name })
+      .eq("id", params.teamId)
+      .select("id,name")
+      .single();
+
+    if (error) {
+      if (error.code === "23505") {
+        throw new AppError("CONFLICT", "Esiste gia' una squadra con questo nome.");
+      }
+      throw new AppError("INTERNAL_ERROR", "Impossibile rinominare la squadra.");
+    }
+
+    if (!data) {
+      throw new AppError("VALIDATION_ERROR", "Squadra non trovata.", 404);
+    }
+
+    return NextResponse.json({ team: data });
+  } catch (error) {
+    const response = toPublicError(error, "Errore durante la rinomina della squadra.");
     return NextResponse.json(response.body, { status: response.status });
   }
 }

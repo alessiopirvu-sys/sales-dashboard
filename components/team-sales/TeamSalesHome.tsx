@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LoaderCircle, Plus, Trash2, TrendingUp, Users } from "lucide-react";
+import { Check, LoaderCircle, Pencil, Plus, Trash2, TrendingUp, Users, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,9 @@ export function TeamSalesHome({ canCreateTeam }: { canCreateTeam: boolean }) {
   const [newTeamName, setNewTeamName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
   const [overview, setOverview] = useState<TeamSalesOverviewRow[]>([]);
   const [isOverviewLoading, setIsOverviewLoading] = useState(true);
   const [myTeamIds, setMyTeamIds] = useState<string[]>([]);
@@ -145,6 +148,43 @@ export function TeamSalesHome({ canCreateTeam }: { canCreateTeam: boolean }) {
       setError(requestError instanceof Error ? requestError.message : "Errore sconosciuto.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const startRename = (team: Team) => {
+    setRenamingId(team.id);
+    setRenameValue(team.name);
+  };
+
+  const cancelRename = () => {
+    setRenamingId(null);
+    setRenameValue("");
+  };
+
+  const saveRename = async (team: Team) => {
+    const name = renameValue.trim();
+    if (!name || name === team.name) {
+      cancelRename();
+      return;
+    }
+    setIsRenaming(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/team-sales/${team.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || "Impossibile rinominare la squadra.");
+      }
+      cancelRename();
+      await Promise.all([load(), loadOverview()]);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Errore sconosciuto.");
+    } finally {
+      setIsRenaming(false);
     }
   };
 
@@ -271,26 +311,63 @@ export function TeamSalesHome({ canCreateTeam }: { canCreateTeam: boolean }) {
                 )}
               >
                 <CardContent className="flex items-center gap-3 p-5">
-                  <Link href={`/team-sales/${team.id}`} className="flex flex-1 items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                      <Users className="h-5 w-5" />
+                  {renamingId === team.id ? (
+                    <div className="flex flex-1 items-center gap-2">
+                      <Input
+                        autoFocus
+                        value={renameValue}
+                        onChange={(event) => setRenameValue(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") void saveRename(team);
+                          if (event.key === "Escape") cancelRename();
+                        }}
+                        className="h-10"
+                      />
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={isRenaming}
+                        onClick={() => void saveRename(team)}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="secondary" disabled={isRenaming} onClick={cancelRename}>
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-lg font-semibold text-slate-950">{team.name}</p>
-                      {myTeamIds.includes(team.id) ? <Badge>La tua squadra</Badge> : null}
-                    </div>
-                  </Link>
-                  {canCreateTeam ? (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="text-rose-600 hover:text-rose-700"
-                      disabled={deletingId === team.id}
-                      onClick={() => void deleteTeam(team)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  ) : null}
+                  ) : (
+                    <>
+                      <Link href={`/team-sales/${team.id}`} className="flex flex-1 items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                          <Users className="h-5 w-5" />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-lg font-semibold text-slate-950">{team.name}</p>
+                          {myTeamIds.includes(team.id) ? <Badge>La tua squadra</Badge> : null}
+                        </div>
+                      </Link>
+                      {canCreateTeam ? (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => startRename(team)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="text-rose-600 hover:text-rose-700"
+                            disabled={deletingId === team.id}
+                            onClick={() => void deleteTeam(team)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : null}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             ))}
