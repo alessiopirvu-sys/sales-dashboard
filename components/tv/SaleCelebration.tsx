@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { PartyPopper, Volume2, VolumeX } from "lucide-react";
 
@@ -36,14 +36,11 @@ export const SaleCelebration = forwardRef<SaleCelebrationHandle>(function SaleCe
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const idRef = useRef(0);
 
-  useEffect(() => {
-    audioRef.current = new Audio(CELEBRATION_SOUND_URL);
-    audioRef.current.preload = "auto";
-  }, []);
-
   const enableAudio = () => {
     const audio = audioRef.current;
     if (!audio) return;
+    audio.muted = false;
+    audio.volume = 1;
     audio
       .play()
       .then(() => {
@@ -84,6 +81,8 @@ export const SaleCelebration = forwardRef<SaleCelebrationHandle>(function SaleCe
 
   return (
     <>
+      <audio ref={audioRef} src={CELEBRATION_SOUND_URL} preload="auto" playsInline />
+
       <button
         type="button"
         onClick={enableAudio}
