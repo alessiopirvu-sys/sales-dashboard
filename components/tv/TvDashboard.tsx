@@ -3,15 +3,15 @@
 import "@/lib/polyfills/resize-observer";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { format } from "date-fns";
+import { format, startOfWeek, subDays } from "date-fns";
 import { it } from "date-fns/locale";
-import { BadgeEuro, LayoutGrid, LoaderCircle, Target, TrendingDown, TrendingUp, Trophy, Users } from "lucide-react";
+import { BadgeEuro, CalendarClock, LayoutGrid, LoaderCircle, Target, TrendingDown, TrendingUp, Trophy, Users } from "lucide-react";
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatCompactNumber } from "@/lib/formatters";
 import { formatCurrency as formatTeamCurrency } from "@/lib/team-sales/workbook";
-import { DashboardResponse, RankingRow, SellerRecord } from "@/lib/types";
+import { DashboardResponse, RankingRow, SellerRecord, TrendPoint } from "@/lib/types";
 import { TeamSalesOverviewRow } from "@/lib/team-sales/types";
 import { SaleCelebration, SaleCelebrationHandle } from "@/components/tv/SaleCelebration";
 
@@ -68,6 +68,27 @@ function useClock() {
 function computeDelta(current: number, previous: number) {
   if (previous <= 0) return current > 0 ? 100 : 0;
   return ((current - previous) / previous) * 100;
+}
+
+// Due settimane solari (lun-dom) piena gia' concluse: quella appena finita
+// e quella precedente. Serve il range completo per interrogare l'API con
+// un'unica chiamata "custom" e poi sommare i giorni di ciascuna settimana.
+function getComparisonWeekRanges() {
+  const thisWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const lastWeekStart = subDays(thisWeekStart, 7);
+  const lastWeekEnd = subDays(thisWeekStart, 1);
+  const weekBeforeStart = subDays(lastWeekStart, 7);
+  const weekBeforeEnd = subDays(lastWeekStart, 1);
+
+  return { lastWeekStart, lastWeekEnd, weekBeforeStart, weekBeforeEnd };
+}
+
+function sumAppointmentsInRange(trend: TrendPoint[], start: Date, end: Date) {
+  const startIso = format(start, "yyyy-MM-dd");
+  const endIso = format(end, "yyyy-MM-dd");
+  return trend
+    .filter((point) => point.date >= startIso && point.date <= endIso)
+    .reduce((sum, point) => sum + point.appointmentsBooked, 0);
 }
 
 // Superficie "Apple-like": niente bordi netti, solo un'ombra morbida e
@@ -384,6 +405,40 @@ function SellersAppointmentsBarChart({ rows }: { rows: RankingRow[] }) {
   );
 }
 
+function WeeklyAppointmentsComparison({ lastWeek, weekBefore }: { lastWeek: number; weekBefore: number }) {
+  const delta = computeDelta(lastWeek, weekBefore);
+  const maxValue = Math.max(lastWeek, weekBefore, 1);
+
+  return (
+    <div className="flex h-full flex-col justify-center gap-4">
+      {[
+        { label: "Settimana scorsa", value: lastWeek },
+        { label: "Settimana precedente", value: weekBefore }
+      ].map((item) => (
+        <div key={item.label} className="space-y-1.5">
+          <div className="flex items-baseline justify-between">
+            <p className="text-[13px] font-medium text-slate-500">{item.label}</p>
+            <p className="text-2xl font-bold tracking-[-0.03em] text-slate-950">
+              {formatCompactNumber(item.value)}
+              <span className="ml-1 text-[12px] font-medium text-slate-400">app.</span>
+            </p>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-primary"
+              style={{ width: `${Math.max(4, Math.round((item.value / maxValue) * 100))}%` }}
+            />
+          </div>
+        </div>
+      ))}
+      <div className="flex items-center justify-center pt-1">
+        <DeltaBadge delta={delta} />
+        <span className="ml-2 text-xs text-slate-500">vs settimana precedente</span>
+      </div>
+    </div>
+  );
+}
+
 const PANEL_TONES = {
   white: { surface: SURFACE, iconBg: "bg-primary/10", iconColor: "text-primary", title: "text-slate-900" },
   tint: {
@@ -431,6 +486,7 @@ export function TvDashboard() {
   const [teams, setTeams] = useState<TeamSalesOverviewRow[]>([]);
   const [sellers, setSellers] = useState<SellerRecord[]>([]);
   const [sellerTargets, setSellerTargets] = useState<Record<string, number>>({});
+  const [weeklyAppointments, setWeeklyAppointments] = useState({ lastWeek: 0, weekBefore: 0 });
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
   const celebrationRef = useRef<SaleCelebrationHandle>(null);
   const previousRevenueRef = useRef<Map<string, number> | null>(null);
@@ -440,16 +496,33 @@ export function TvDashboard() {
 
     const load = async () => {
       try {
-        const [dashboardResponse, teamsResponse, sellersResponse] = await Promise.all([
+        const weekRanges = getComparisonWeekRanges();
+        const weeklyParams = new URLSearchParams({
+          preset: "custom",
+          seller: "all",
+          details: "lite",
+          startDate: format(weekRanges.weekBeforeStart, "yyyy-MM-dd"),
+          endDate: format(weekRanges.lastWeekEnd, "yyyy-MM-dd")
+        });
+
+        const [dashboardResponse, teamsResponse, sellersResponse, weeklyResponse] = await Promise.all([
           fetch("/api/dashboard-data?preset=month&seller=all&details=lite", { cache: "no-store" }),
           fetch("/api/team-sales/overview", { cache: "no-store" }),
-          fetch("/api/sellers", { cache: "no-store" })
+          fetch("/api/sellers", { cache: "no-store" }),
+          fetch(`/api/dashboard-data?${weeklyParams.toString()}`, { cache: "no-store" })
         ]);
 
         if (!isActive) return;
 
         if (dashboardResponse.ok) {
           setData((await dashboardResponse.json()) as DashboardResponse);
+        }
+        if (weeklyResponse.ok) {
+          const weeklyPayload = (await weeklyResponse.json()) as DashboardResponse;
+          setWeeklyAppointments({
+            lastWeek: sumAppointmentsInRange(weeklyPayload.trend, weekRanges.lastWeekStart, weekRanges.lastWeekEnd),
+            weekBefore: sumAppointmentsInRange(weeklyPayload.trend, weekRanges.weekBeforeStart, weekRanges.weekBeforeEnd)
+          });
         }
         if (teamsResponse.ok) {
           const payload = (await teamsResponse.json()) as { teams?: TeamSalesOverviewRow[] };
@@ -642,15 +715,27 @@ export function TvDashboard() {
               </PanelCard>
             </div>
           </div>
-          <PanelCard title="Classifica venditori" icon={Trophy}>
-            {sortedRanking.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                Nessun dato disponibile.
-              </div>
-            ) : (
-              <SellersRankedBarChart rows={sortedRanking} sellerTargets={sellerTargets} />
-            )}
-          </PanelCard>
+          <div className="flex min-h-0 flex-col gap-4">
+            <div className="min-h-0 flex-1">
+              <PanelCard title="Classifica venditori" icon={Trophy}>
+                {sortedRanking.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                    Nessun dato disponibile.
+                  </div>
+                ) : (
+                  <SellersRankedBarChart rows={sortedRanking} sellerTargets={sellerTargets} />
+                )}
+              </PanelCard>
+            </div>
+            <div className="min-h-0 flex-1">
+              <PanelCard title="Appuntamenti: confronto settimanale" icon={CalendarClock}>
+                <WeeklyAppointmentsComparison
+                  lastWeek={weeklyAppointments.lastWeek}
+                  weekBefore={weeklyAppointments.weekBefore}
+                />
+              </PanelCard>
+            </div>
+          </div>
         </div>
       </div>
     </div>
