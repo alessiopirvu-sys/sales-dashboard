@@ -257,6 +257,7 @@ function TeamsBarChart({ teams }: { teams: TeamSalesOverviewRow[] }) {
           width={130}
           axisLine={false}
           tickLine={false}
+          interval={0}
           tick={{ fontSize: 13, fontWeight: 600, fill: "#334155" }}
         />
         <Bar dataKey="venduto" radius={[6, 6, 6, 6]} background={{ fill: "#f8fafc", radius: 6 }}>
@@ -302,7 +303,7 @@ function SellerNameTick({ x, y, payload, index, dark }: any) {
       y={y}
       dy={4}
       textAnchor="end"
-      className={cn("text-[13px] font-semibold", dark ? "fill-white" : "fill-slate-900")}
+      className={cn("text-[11px] font-semibold", dark ? "fill-white" : "fill-slate-900")}
     >
       {medal ? `${medal} ` : ""}
       {payload.value}
@@ -333,7 +334,7 @@ function SellersRankedBarChart({
       <BarChart
         data={chartData}
         layout="vertical"
-        barCategoryGap="12%"
+        barCategoryGap="8%"
         margin={{ top: 4, right: 150, bottom: 4, left: 4 }}
       >
         <XAxis type="number" hide domain={[0, maxRevenue]} />
@@ -343,6 +344,7 @@ function SellersRankedBarChart({
           width={110}
           axisLine={false}
           tickLine={false}
+          interval={0}
           tick={<SellerNameTick dark={dark} />}
         />
         <Bar
@@ -392,6 +394,7 @@ function SellersAppointmentsBarChart({ rows }: { rows: RankingRow[] }) {
           width={110}
           axisLine={false}
           tickLine={false}
+          interval={0}
           tick={{ fontSize: 12, fontWeight: 600, fill: "#334155" }}
         />
         <Bar dataKey="appointments" radius={[6, 6, 6, 6]} background={{ fill: "#f8fafc", radius: 6 }}>
@@ -405,19 +408,36 @@ function SellersAppointmentsBarChart({ rows }: { rows: RankingRow[] }) {
   );
 }
 
-function WeeklyAppointmentsComparison({ lastWeek, weekBefore }: { lastWeek: number; weekBefore: number }) {
+function formatWeekRangeLabel(start: Date, end: Date) {
+  return `dal ${format(start, "d MMM", { locale: it })} al ${format(end, "d MMM", { locale: it })}`;
+}
+
+function WeeklyAppointmentsComparison({
+  lastWeek,
+  weekBefore,
+  lastWeekRangeLabel,
+  weekBeforeRangeLabel
+}: {
+  lastWeek: number;
+  weekBefore: number;
+  lastWeekRangeLabel: string;
+  weekBeforeRangeLabel: string;
+}) {
   const delta = computeDelta(lastWeek, weekBefore);
   const maxValue = Math.max(lastWeek, weekBefore, 1);
 
   return (
     <div className="flex h-full flex-col justify-center gap-4">
       {[
-        { label: "Settimana scorsa", value: lastWeek },
-        { label: "Settimana precedente", value: weekBefore }
+        { label: "Settimana scorsa", rangeLabel: lastWeekRangeLabel, value: lastWeek },
+        { label: "Settimana precedente", rangeLabel: weekBeforeRangeLabel, value: weekBefore }
       ].map((item) => (
         <div key={item.label} className="space-y-1.5">
           <div className="flex items-baseline justify-between">
-            <p className="text-[13px] font-medium text-slate-500">{item.label}</p>
+            <div>
+              <p className="text-[13px] font-medium text-slate-500">{item.label}</p>
+              <p className="text-[11px] text-slate-400">{item.rangeLabel}</p>
+            </div>
             <p className="text-2xl font-bold tracking-[-0.03em] text-slate-950">
               {formatCompactNumber(item.value)}
               <span className="ml-1 text-[12px] font-medium text-slate-400">app.</span>
@@ -490,6 +510,13 @@ export function TvDashboard() {
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
   const celebrationRef = useRef<SaleCelebrationHandle>(null);
   const previousRevenueRef = useRef<Map<string, number> | null>(null);
+  const weekRangeLabels = useMemo(() => {
+    const ranges = getComparisonWeekRanges();
+    return {
+      lastWeek: formatWeekRangeLabel(ranges.lastWeekStart, ranges.lastWeekEnd),
+      weekBefore: formatWeekRangeLabel(ranges.weekBeforeStart, ranges.weekBeforeEnd)
+    };
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -732,6 +759,8 @@ export function TvDashboard() {
                 <WeeklyAppointmentsComparison
                   lastWeek={weeklyAppointments.lastWeek}
                   weekBefore={weeklyAppointments.weekBefore}
+                  lastWeekRangeLabel={weekRangeLabels.lastWeek}
+                  weekBeforeRangeLabel={weekRangeLabels.weekBefore}
                 />
               </PanelCard>
             </div>
