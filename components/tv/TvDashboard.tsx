@@ -384,7 +384,7 @@ function SellersAppointmentsBarChart({ rows }: { rows: RankingRow[] }) {
       <BarChart
         data={chartData}
         layout="vertical"
-        barCategoryGap="13%"
+        barCategoryGap="5%"
         margin={{ top: 4, right: 90, bottom: 4, left: 4 }}
       >
         <XAxis type="number" hide />
