@@ -427,27 +427,27 @@ function WeeklyAppointmentsComparison({
   const maxValue = Math.max(lastWeek, weekBefore, 1);
 
   return (
-    <div className="flex h-full flex-col justify-center gap-4">
+    <div className="flex h-full flex-col justify-center gap-6">
       {[
         { label: "Settimana scorsa", rangeLabel: lastWeekRangeLabel, value: lastWeek },
         { label: "Settimana precedente", rangeLabel: weekBeforeRangeLabel, value: weekBefore }
       ].map((item) => (
-        <div key={item.label} className="space-y-1.5">
-          <div className="flex items-baseline justify-between">
-            <div>
-              <p className="text-[13px] font-medium text-slate-500">{item.label}</p>
-              <p className="text-[11px] text-slate-400">{item.rangeLabel}</p>
+        <div key={item.label} className="space-y-2">
+          <div>
+            <p className="text-[13px] font-medium text-slate-500">{item.label}</p>
+            <p className="text-[11px] text-slate-400">{item.rangeLabel}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-14 flex-1 overflow-hidden rounded-[6px] bg-slate-100">
+              <div
+                className="h-full rounded-[6px] bg-primary"
+                style={{ width: `${Math.max(4, Math.round((item.value / maxValue) * 100))}%` }}
+              />
             </div>
-            <p className="text-2xl font-bold tracking-[-0.03em] text-slate-950">
+            <p className="w-[92px] shrink-0 text-right text-2xl font-bold tracking-[-0.03em] text-slate-950">
               {formatCompactNumber(item.value)}
               <span className="ml-1 text-[12px] font-medium text-slate-400">app.</span>
             </p>
-          </div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-primary"
-              style={{ width: `${Math.max(4, Math.round((item.value / maxValue) * 100))}%` }}
-            />
           </div>
         </div>
       ))}
