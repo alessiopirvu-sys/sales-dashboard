@@ -508,7 +508,7 @@ export function KpiSpreadsheet({ sellerName }: Props) {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="min-h-[420px] flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
             <KpiGrid
               columns={KPI_SPREADSHEET_COLUMNS}
               groups={KPI_SPREADSHEET_GROUPS}
