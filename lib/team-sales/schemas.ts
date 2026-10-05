@@ -38,4 +38,10 @@ export const createTeamSalesTeamSchema = z.object({
   name: z.string().trim().min(1, "Il nome della squadra e' obbligatorio.")
 });
 
+export const createTeamSalesMonthSchema = z.object({
+  year: z.coerce.number().int().min(2000).max(2100),
+  month: z.coerce.number().int().min(1).max(12),
+  copyFromMonthId: z.string().uuid().nullable().optional()
+});
+
 export type TeamSalesSavePayload = z.infer<typeof teamSalesSavePayloadSchema>;

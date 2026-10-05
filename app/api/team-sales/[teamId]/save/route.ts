@@ -36,6 +36,9 @@ export async function POST(request: Request, { params }: RouteParams) {
     });
 
     if (error) {
+      if (error.code === "23505") {
+        throw new AppError("CONFLICT", "Esiste gia' un mese con questo anno e mese per la squadra.");
+      }
       throw new AppError("INTERNAL_ERROR", `Salvataggio fallito: ${error.message}`);
     }
 

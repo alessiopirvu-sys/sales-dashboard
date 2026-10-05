@@ -23,6 +23,7 @@ type TeamSalesMonthRow = {
 type TeamSalesMonthPayload = {
   team: { id: string; name: string } | null;
   month: TeamSalesMonthRow | null;
+  months: { id: string; year: number; month: number; monthLabel: string; targetTotal: number }[];
   sellers: { id: string; sellerId: string | null; name: string; target: number }[];
   entries: { sellerName: string; saleDate: string; amount: number }[];
   pending: {
@@ -36,13 +37,20 @@ type TeamSalesMonthPayload = {
   }[];
 };
 
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(request: Request, { params }: RouteParams) {
   try {
     const context = await requireActiveProfile();
     const supabase = context.isDevMode ? getSupabaseAdmin() : context.supabase;
 
+    // Senza ?year=&month= il database sceglie il mese corrente (o il piu' recente).
+    const searchParams = new URL(request.url).searchParams;
+    const year = Number(searchParams.get("year"));
+    const month = Number(searchParams.get("month"));
+    const hasMonth = Number.isInteger(year) && year >= 2000 && year <= 2100 && Number.isInteger(month) && month >= 1 && month <= 12;
+
     const { data, error } = await supabase.rpc("get_team_sales_month", {
-      p_team_id: params.teamId
+      p_team_id: params.teamId,
+      ...(hasMonth ? { p_year: year, p_month: month } : {})
     });
 
     if (error) {
@@ -60,6 +68,13 @@ export async function GET(_request: Request, { params }: RouteParams) {
     const result: TeamSalesMonthData = {
       teamId: payload.team.id,
       teamMonthId: payload.month?.id ?? null,
+      months: (payload.months ?? []).map((row) => ({
+        id: row.id,
+        year: row.year,
+        month: row.month,
+        monthLabel: row.monthLabel,
+        targetTotal: Number(row.targetTotal || 0)
+      })),
       setup: {
         teamName: payload.team.name,
         monthLabel: payload.month?.month_label ?? "",

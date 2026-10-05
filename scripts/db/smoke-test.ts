@@ -137,6 +137,39 @@ async function main() {
   const gone = await admin.from("team_sales_teams").select("id").eq("id", created.data!.id).maybeSingle();
   check("team eliminato", gone.data === null, gone);
 
+  // --- Team Sales: piu' mesi per squadra
+  const anyTeam = await admin.from("team_sales_teams").select("id").order("created_at", { ascending: true }).limit(1).single();
+  const teamId = anyTeam.data!.id as string;
+  const existing = await asAdmin.rpc("get_team_sales_month", { p_team_id: teamId });
+  check("rpc get_team_sales_month: mese attivo + elenco mesi", !existing.error && Array.isArray(existing.data?.months) && existing.data.months.length >= 1, existing.error);
+  const sourceMonthId = existing.data!.month.id as string;
+  const sourceSellers = existing.data!.sellers.length as number;
+
+  const newMonth = await asAdmin.rpc("create_team_sales_month", { p_team_id: teamId, p_year: 2099, p_month: 1, p_copy_from: sourceMonthId });
+  check("rpc create_team_sales_month (copia dal mese esistente)", !newMonth.error && newMonth.data?.teamMonthId, newMonth.error);
+
+  const readNew = await asAdmin.rpc("get_team_sales_month", { p_team_id: teamId, p_year: 2099, p_month: 1 });
+  check("mese richiesto: anno/mese corretti", readNew.data?.month?.year === 2099 && readNew.data?.month?.month === 1, readNew.error);
+  check("mese nuovo: venditori copiati", readNew.data?.sellers?.length === sourceSellers, readNew.data?.sellers);
+  check("mese nuovo: target = somma obiettivi", Number(readNew.data?.month?.target_total) === (existing.data!.sellers as { target: number }[]).reduce((sum, row) => sum + Number(row.target), 0), readNew.data?.month);
+  check("mese nuovo: nome in italiano", readNew.data?.month?.month_label === "Gennaio 2099", readNew.data?.month?.month_label);
+  check("mese nuovo: nessuna vendita ne' pending", readNew.data?.entries?.length === 0 && readNew.data?.pending?.length === 0, readNew.data);
+  check("mese nuovo: elenco mesi ordinato (piu' recente prima)", readNew.data?.months?.[0]?.year === 2099, readNew.data?.months);
+
+  const dupMonth = await asAdmin.rpc("create_team_sales_month", { p_team_id: teamId, p_year: 2099, p_month: 1 });
+  check("mese duplicato -> 23505", dupMonth.error?.code === "23505", dupMonth.error);
+
+  const active = await asAdmin.rpc("get_team_sales_month", { p_team_id: teamId });
+  check("senza anno/mese: il mese futuro non e' scelto se ne esiste uno corrente/passato", active.data?.month?.year !== 2099, active.data?.month);
+
+  const delMonth = await asAdmin.from("team_sales_months").delete().eq("id", newMonth.data!.teamMonthId).eq("team_id", teamId).select("id");
+  check("elimina mese (cascade venditori)", !delMonth.error && delMonth.data?.length === 1, delMonth.error);
+  const orphans = await admin.from("team_sales_sellers").select("id").eq("team_month_id", newMonth.data!.teamMonthId);
+  check("nessun venditore orfano dopo l'eliminazione", orphans.data?.length === 0, orphans);
+
+  const overviewAfter = await asAdmin.rpc("get_team_sales_overview");
+  check("overview dopo i mesi multipli", Array.isArray(overviewAfter.data) && overviewAfter.data.length > 0, overviewAfter.error);
+
   const bad = await admin.from("sellers").select("id; drop table sellers");
   check("identificatori non validi rifiutati", Boolean(bad.error), bad);
 }

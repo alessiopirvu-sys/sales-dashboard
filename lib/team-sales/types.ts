@@ -56,9 +56,18 @@ export type TeamSalesOverviewRow = {
   topSellerTotal: number;
 };
 
+export type TeamSalesMonthSummary = {
+  id: string;
+  year: number;
+  month: number;
+  monthLabel: string;
+  targetTotal: number;
+};
+
 export type TeamSalesMonthData = {
   teamId: string;
   teamMonthId: string | null;
+  months: TeamSalesMonthSummary[];
   setup: TeamSalesSetup;
   entries: TeamSalesEntry[];
   pending: TeamSalesPendingRow[];

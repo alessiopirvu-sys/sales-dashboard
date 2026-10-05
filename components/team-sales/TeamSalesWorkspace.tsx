@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Clock3, LoaderCircle, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,17 @@ const MONTH_LABELS = [
 
 function formatMonthLabel(year: number, month: number) {
   return `${MONTH_LABELS[month - 1] ?? month} ${year}`;
+}
+
+function toMonthKey(year: number, month: number) {
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+function parseMonthKey(value: string | null) {
+  const match = /^(\d{4})-(\d{2})$/.exec(value ?? "");
+  if (!match) return null;
+  const month = Number(match[2]);
+  return month >= 1 && month <= 12 ? { year: Number(match[1]), month } : null;
 }
 
 type TabId = "dashboard" | "setup" | "inserimenti" | "pending";
@@ -69,15 +81,149 @@ function ModalShell({
   );
 }
 
+function AddMonthModal({
+  teamId,
+  data,
+  onClose,
+  onCreated
+}: {
+  teamId: string;
+  data: TeamSalesMonthData;
+  onClose: () => void;
+  onCreated: (year: number, month: number) => void;
+}) {
+  const now = new Date();
+  const latest = data.months[0];
+  // Proposta: il mese successivo all'ultimo gia' presente (altrimenti quello corrente).
+  const suggested = latest
+    ? latest.month === 12
+      ? { year: latest.year + 1, month: 1 }
+      : { year: latest.year, month: latest.month + 1 }
+    : { year: now.getFullYear(), month: now.getMonth() + 1 };
+
+  const [year, setYear] = useState(suggested.year);
+  const [month, setMonth] = useState(suggested.month);
+  const [copyFromCurrent, setCopyFromCurrent] = useState(Boolean(data.teamMonthId));
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const yearOptions = Array.from({ length: 5 }, (_, index) => now.getFullYear() - 1 + index);
+  const alreadyExists = data.months.some((row) => row.year === year && row.month === month);
+
+  const create = async () => {
+    setIsCreating(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/team-sales/${teamId}/months`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          year,
+          month,
+          copyFromMonthId: copyFromCurrent ? data.teamMonthId : null
+        })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || "Impossibile creare il mese.");
+      }
+      onCreated(year, month);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Impossibile creare il mese.");
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <ModalShell title="Aggiungi mese" onClose={onClose}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-2">
+          <label className="text-sm font-medium text-slate-600">Mese</label>
+          <Select value={String(month)} onValueChange={(value) => setMonth(Number(value))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTH_LABELS.map((label, index) => (
+                <SelectItem key={label} value={String(index + 1)}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <label className="text-sm font-medium text-slate-600">Anno</label>
+          <Select value={String(year)} onValueChange={(value) => setYear(Number(value))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {yearOptions.map((yearOption) => (
+                <SelectItem key={yearOption} value={String(yearOption)}>
+                  {yearOption}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {data.teamMonthId ? (
+        <label className="flex items-start gap-3 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4"
+            checked={copyFromCurrent}
+            onChange={(event) => setCopyFromCurrent(event.target.checked)}
+          />
+          <span>
+            Copia venditori e obiettivi da <strong>{data.setup.monthLabel}</strong> (poi li puoi modificare dal Setup
+            del nuovo mese).
+          </span>
+        </label>
+      ) : null}
+
+      <p className="text-sm text-slate-500">
+        Le vendite del nuovo mese si calcolano da sole dai KPI giornalieri dei venditori collegati.
+      </p>
+
+      {alreadyExists ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          {formatMonthLabel(year, month)} esiste gia' per questa squadra.
+        </div>
+      ) : null}
+      {error ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
+      ) : null}
+
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={onClose} disabled={isCreating}>
+          Annulla
+        </Button>
+        <Button onClick={() => void create()} disabled={isCreating || alreadyExists}>
+          {isCreating ? "Creazione..." : "Crea mese"}
+        </Button>
+      </div>
+    </ModalShell>
+  );
+}
+
 export function TeamSalesWorkspace({
   teamId,
   activeTab,
-  canManageSetup
+  canManageSetup,
+  canManageMonths = false
 }: {
   teamId: string;
   activeTab: TabId;
   canManageSetup: boolean;
+  canManageMonths?: boolean;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const monthParam = searchParams.get("m");
+  const [showAddMonth, setShowAddMonth] = useState(false);
   const [data, setData] = useState<TeamSalesMonthData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -86,7 +232,9 @@ export function TeamSalesWorkspace({
   const load = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/team-sales/${teamId}`, { cache: "no-store" });
+      const requested = parseMonthKey(monthParam);
+      const query = requested ? `?year=${requested.year}&month=${requested.month}` : "";
+      const response = await fetch(`/api/team-sales/${teamId}${query}`, { cache: "no-store" });
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.message || "Impossibile caricare la squadra.");
@@ -102,7 +250,7 @@ export function TeamSalesWorkspace({
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId]);
+  }, [teamId, monthParam]);
 
   const dashboard = useMemo(() => (data ? deriveDashboardData(data) : null), [data]);
 
@@ -137,6 +285,35 @@ export function TeamSalesWorkspace({
     }
   };
 
+  const deleteCurrentMonth = async () => {
+    if (!data?.teamMonthId) return;
+    if (
+      !window.confirm(
+        `Eliminare ${data.setup.monthLabel}? Verranno rimossi anche obiettivi e pending di questo mese. L'operazione non si puo' annullare.`
+      )
+    ) {
+      return;
+    }
+
+    setIsSaving(true);
+    setFeedback(null);
+    try {
+      const response = await fetch(`/api/team-sales/${teamId}/months/${data.teamMonthId}`, { method: "DELETE" });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || "Impossibile eliminare il mese.");
+      }
+      router.replace(`/team-sales/${teamId}/${activeTab}`);
+      if (!monthParam) {
+        await load();
+      }
+    } catch (error) {
+      setFeedback({ type: "error", message: error instanceof Error ? error.message : "Errore durante l'eliminazione." });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading || !data || !dashboard) {
     return (
       <main className="mx-auto max-w-[1480px]">
@@ -152,6 +329,9 @@ export function TeamSalesWorkspace({
     );
   }
 
+  const monthKey = toMonthKey(data.setup.year, data.setup.month);
+  const monthQuery = `?m=${monthKey}`;
+
   return (
     <div className="mx-auto max-w-[1480px] space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -160,9 +340,33 @@ export function TeamSalesWorkspace({
           <h1 className="font-display text-[1.8rem] font-semibold tracking-[-0.04em] text-slate-950 sm:text-[2rem]">
             {data.setup.teamName}
           </h1>
-          <div className="flex items-center gap-2 text-xs text-slate-500 md:text-sm">
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-500 md:text-sm">
             <Clock3 className="h-4 w-4 text-primary" />
-            {data.setup.monthLabel}
+            {data.months.length > 0 ? (
+              <Select
+                value={monthKey}
+                onValueChange={(value) => router.push(`/team-sales/${teamId}/${activeTab}?m=${value}`)}
+              >
+                <SelectTrigger className="h-9 w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {data.months.map((row) => (
+                    <SelectItem key={row.id} value={toMonthKey(row.year, row.month)}>
+                      {row.monthLabel}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span>Nessun mese configurato</span>
+            )}
+            {canManageMonths ? (
+              <Button size="sm" variant="secondary" onClick={() => setShowAddMonth(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Aggiungi mese
+              </Button>
+            ) : null}
           </div>
         </div>
         <Link href="/team-sales" className="text-sm font-semibold text-primary">
@@ -175,7 +379,7 @@ export function TeamSalesWorkspace({
           {TABS.map((tab) => (
             <Link
               key={tab.id}
-              href={`/team-sales/${teamId}/${tab.id}`}
+              href={`/team-sales/${teamId}/${tab.id}${monthQuery}`}
               className={cn(
                 "rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200",
                 activeTab === tab.id
@@ -204,13 +408,33 @@ export function TeamSalesWorkspace({
 
       {activeTab === "dashboard" ? <DashboardTab dashboard={dashboard} /> : null}
       {activeTab === "setup" ? (
-        <SetupTab data={data} canManage={canManageSetup} isSaving={isSaving} onSave={persist} />
+        <SetupTab
+          data={data}
+          canManage={canManageSetup}
+          canDeleteMonth={canManageMonths && Boolean(data.teamMonthId)}
+          isSaving={isSaving}
+          onSave={persist}
+          onDeleteMonth={deleteCurrentMonth}
+        />
       ) : null}
       {activeTab === "inserimenti" ? (
         <InserimentiTab data={data} dashboard={dashboard} />
       ) : null}
       {activeTab === "pending" ? (
         <PendingTab data={data} dashboard={dashboard} isSaving={isSaving} onSave={persist} />
+      ) : null}
+
+      {showAddMonth ? (
+        <AddMonthModal
+          teamId={teamId}
+          data={data}
+          onClose={() => setShowAddMonth(false)}
+          onCreated={(year, month) => {
+            setShowAddMonth(false);
+            setFeedback({ type: "success", message: `${formatMonthLabel(year, month)} aggiunto.` });
+            router.push(`/team-sales/${teamId}/setup?m=${toMonthKey(year, month)}`);
+          }}
+        />
       ) : null}
     </div>
   );
@@ -376,28 +600,26 @@ function DashboardTab({ dashboard }: { dashboard: ReturnType<typeof deriveDashbo
 function SetupTab({
   data,
   canManage,
+  canDeleteMonth,
   isSaving,
-  onSave
+  onSave,
+  onDeleteMonth
 }: {
   data: TeamSalesMonthData;
   canManage: boolean;
+  canDeleteMonth: boolean;
   isSaving: boolean;
   onSave: (next: TeamSalesMonthData, message: string) => Promise<void>;
+  onDeleteMonth: () => Promise<void>;
 }) {
-  const currentYear = new Date().getFullYear();
-  const yearOptions = [currentYear - 1, currentYear, currentYear + 1];
-
   const [isEditing, setIsEditing] = useState(false);
-  const [year, setYear] = useState(data.setup.year);
-  const [month, setMonth] = useState(data.setup.month);
   const [workingDays, setWorkingDays] = useState(String(data.setup.workingDays));
   const [sellers, setSellers] = useState<TeamSalesSeller[]>(data.setup.sellers);
   const [registeredSellers, setRegisteredSellers] = useState<RegisteredSeller[]>([]);
   const [sellerToAdd, setSellerToAdd] = useState("");
 
   useEffect(() => {
-    setYear(data.setup.year);
-    setMonth(data.setup.month);
+    setIsEditing(false);
     setWorkingDays(String(data.setup.workingDays));
     setSellers(data.setup.sellers);
   }, [data]);
@@ -426,9 +648,6 @@ function SetupTab({
       ...data,
       setup: {
         ...data.setup,
-        year,
-        month,
-        monthLabel: formatMonthLabel(year, month),
         workingDays: Number(workingDays) || data.setup.workingDays,
         targetTotal: sanitizedSellers.reduce((sum, seller) => sum + Number(seller.target || 0), 0),
         sellers: sanitizedSellers
@@ -448,58 +667,36 @@ function SetupTab({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Parametri del mese</CardTitle>
-        {canManage ? (
-          isEditing ? (
-            <Button size="sm" onClick={() => void handleSave()} disabled={isSaving}>
-              {isSaving ? "Salvataggio..." : "Salva"}
+        <CardTitle>Parametri di {data.setup.monthLabel}</CardTitle>
+        <div className="flex items-center gap-2">
+          {canDeleteMonth && !isEditing ? (
+            <Button size="sm" variant="secondary" onClick={() => void onDeleteMonth()} disabled={isSaving}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Elimina mese
             </Button>
-          ) : (
-            <Button size="sm" variant="secondary" onClick={() => setIsEditing(true)}>
-              Modifica
-            </Button>
-          )
-        ) : null}
+          ) : null}
+          {canManage ? (
+            isEditing ? (
+              <Button size="sm" onClick={() => void handleSave()} disabled={isSaving}>
+                {isSaving ? "Salvataggio..." : "Salva"}
+              </Button>
+            ) : (
+              <Button size="sm" variant="secondary" onClick={() => setIsEditing(true)}>
+                Modifica
+              </Button>
+            )
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-2">
             <label className="text-sm font-medium text-slate-600">Mese</label>
-            {isEditing ? (
-              <Select value={String(month)} onValueChange={(value) => setMonth(Number(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTH_LABELS.map((label, index) => (
-                    <SelectItem key={label} value={String(index + 1)}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <p className="text-sm text-slate-800">{formatMonthLabel(data.setup.year, data.setup.month)}</p>
-            )}
+            <p className="text-sm text-slate-800">{MONTH_LABELS[data.setup.month - 1]}</p>
           </div>
           <div className="grid gap-2">
             <label className="text-sm font-medium text-slate-600">Anno</label>
-            {isEditing ? (
-              <Select value={String(year)} onValueChange={(value) => setYear(Number(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {yearOptions.map((yearOption) => (
-                    <SelectItem key={yearOption} value={String(yearOption)}>
-                      {yearOption}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <p className="text-sm text-slate-800">{data.setup.year}</p>
-            )}
+            <p className="text-sm text-slate-800">{data.setup.year}</p>
           </div>
           <div className="grid gap-2">
             <label className="text-sm font-medium text-slate-600">Giorni lavorativi</label>
