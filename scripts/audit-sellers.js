@@ -1,6 +1,6 @@
 const fs = require("fs");
 const Papa = require("papaparse");
-const { createClient } = require("@supabase/supabase-js");
+const { Pool } = require("pg");
 
 function loadEnv(filePath) {
   return Object.fromEntries(
@@ -103,18 +103,16 @@ async function inspectSheet(label, url) {
 
 async function main() {
   const env = loadEnv(".env.local");
-  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  const pool = new Pool({
+    connectionString: env.DATABASE_URL,
+    ssl: env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined
+  });
   const sellerFilter = process.argv[2]?.trim().toLowerCase();
 
-  const { data: sellers, error } = await supabase
-    .from("sellers")
-    .select("name,sheet_url,sheets,is_active")
-    .eq("is_active", true)
-    .order("name", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
+  const { rows: sellers } = await pool.query(
+    "select name, sheet_url, sheets, is_active from public.sellers where is_active = true order by name asc"
+  );
+  await pool.end();
 
   const filteredSellers = (sellers || []).filter((seller) =>
     sellerFilter ? seller.name.toLowerCase().includes(sellerFilter) : true

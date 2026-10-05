@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
+import { createAdminDb } from "../lib/db/client";
+
 type CliArgs = {
   email: string;
   firstName: string;
@@ -52,7 +54,10 @@ async function main() {
     }
   });
 
-  const existingProfile = await supabase
+  // Supabase serve solo per l'autenticazione: i profili stanno su Postgres/Railway.
+  const db = createAdminDb();
+
+  const existingProfile = await db
     .from("profiles")
     .select("id, role, email")
     .eq("email", email)
@@ -110,7 +115,16 @@ async function main() {
     userId = inviteResult.data.user.id;
   }
 
-  const upsertProfile = await supabase.from("profiles").upsert(
+  // Il middleware legge il ruolo da app_metadata.
+  const roleResult = await supabase.auth.admin.updateUserById(userId, {
+    app_metadata: { role: "admin" }
+  });
+
+  if (roleResult.error) {
+    throw new Error(`Impossibile assegnare il ruolo admin all'utente Auth: ${roleResult.error.message}`);
+  }
+
+  const upsertProfile = await db.from("profiles").upsert(
     {
       id: userId,
       role: "admin",
@@ -131,7 +145,7 @@ async function main() {
   process.stdout.write(`Admin iniziale pronto per ${email}.\n`);
 }
 
-main().catch((error) => {
+main().then(() => process.exit(0)).catch((error) => {
   const message = error instanceof Error ? error.message : "Errore sconosciuto";
   process.stderr.write(`${message}\n`);
   process.exit(1);

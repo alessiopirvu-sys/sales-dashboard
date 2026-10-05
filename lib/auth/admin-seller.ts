@@ -271,6 +271,7 @@ export async function syncSellerPlatformAccess(
         email: plan.email,
         password: plan.password,
         email_confirm: true,
+        app_metadata: { role: "seller" },
         user_metadata: buildTemporaryPasswordMetadata({
           firstName: nameParts.firstName,
           lastName: nameParts.lastName
@@ -497,6 +498,15 @@ export async function inviteSellerAccount(
 
       authUserId = inviteResult.data.user.id;
       createdAuthUserId = authUserId;
+    }
+
+    // Il middleware (Edge) legge il ruolo da app_metadata.
+    const roleResult = await supabase.auth.admin.updateUserById(authUserId, {
+      app_metadata: { role: "seller" }
+    });
+
+    if (roleResult.error) {
+      throw new AppError("INTERNAL_ERROR", "Impossibile assegnare il ruolo all'account.");
     }
 
     const { error: profileError } = await supabase.from("profiles").upsert(

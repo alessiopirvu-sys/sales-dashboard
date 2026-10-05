@@ -92,3 +92,21 @@ Inserisci gli ID nei seguenti env:
 3. Esegui il deploy
 
 La struttura è pronta per esecuzione serverless.
+
+## Database su Railway (Supabase solo per l'auth)
+
+- **Autenticazione**: Supabase Auth (login, sessioni, reset password, utenti creati dagli admin).
+- **Dati**: Postgres su Railway, accesso tramite `lib/db` (stessa API di `supabase.from()/rpc()`;
+  per le query utente imposta ruolo `authenticated` + claim JWT, quindi le policy RLS restano attive).
+- Il middleware (Edge) legge il ruolo da `app_metadata.role` dell'utente Supabase; i controlli
+  su profilo attivo / venditore collegato sono nelle guardie lato server (`lib/auth/session.ts`).
+
+Variabili: `DATABASE_URL` (+ `DATABASE_SSL=true` se serve) oltre alle `NEXT_PUBLIC_SUPABASE_*` e `SUPABASE_SERVICE_ROLE_KEY`.
+
+Migrazione una tantum (richiede `SUPABASE_DB_URL` e `RAILWAY_DB_URL` in `.env.migration`):
+
+```bash
+npm run db:migrate-to-railway      # schema public + dati + RLS (FORCE=1 per sovrascrivere)
+DATABASE_URL=<railway> npm run db:smoke        # test di fumo del livello DB
+DATABASE_URL=<railway> npm run sync:auth-roles # scrive il ruolo in app_metadata degli utenti Supabase
+```

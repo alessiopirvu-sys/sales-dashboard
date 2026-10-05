@@ -151,33 +151,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, role, is_active")
-    .eq("id", user.id)
-    .maybeSingle<{ id: string; role: "admin" | "seller"; is_active: boolean }>();
+  // Il middleware gira su Edge e non puo' raggiungere Postgres: il ruolo viene
+  // letto da app_metadata (impostato alla creazione dell'account). I controlli
+  // su profilo attivo / venditore collegato restano nelle guardie lato server
+  // (requireAdmin / requireSeller) di ogni pagina e API.
+  const role = (user.app_metadata as { role?: string } | undefined)?.role;
 
-  if (!profile || !profile.is_active || (profile.role !== "admin" && profile.role !== "seller")) {
+  if (pathname === "/auth/exit" || pathname === "/api/auth/logout") {
+    return response;
+  }
+
+  if (role !== "admin" && role !== "seller") {
     return NextResponse.redirect(new URL("/auth/exit?code=PROFILE_NOT_FOUND", request.url));
   }
 
+  const profile = { role: role as "admin" | "seller" };
   const passwordChangeRequired = isPasswordChangeRequired(user.user_metadata);
 
   if (profile.role === "seller") {
-    const { data: seller } = await supabase
-      .from("sellers")
-      .select("id, is_active, status")
-      .eq("profile_id", user.id)
-      .maybeSingle<{ id: string; is_active: boolean; status: string | null }>();
-
-    if (!seller) {
-      return NextResponse.redirect(new URL("/auth/exit?code=SELLER_NOT_LINKED", request.url));
-    }
-
-    if (!seller.is_active || seller.status === "disabled" || seller.status === "suspended") {
-      return NextResponse.redirect(new URL("/auth/exit?code=ACCOUNT_DISABLED", request.url));
-    }
-
     if (passwordChangeRequired && !isAllowedDuringForcedPasswordUpdate(pathname)) {
       if (isApiRequest) {
         return jsonAuthError(403, "PASSWORD_CHANGE_REQUIRED", "Devi impostare una nuova password per continuare.");

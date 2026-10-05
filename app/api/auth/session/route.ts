@@ -7,6 +7,7 @@ import { isPasswordChangeRequired, resolvePostAuthRedirect } from "@/lib/auth/pa
 import { touchCurrentLastLogin } from "@/lib/auth/last-login";
 import { resolvePostLoginPath } from "@/lib/auth/navigation";
 import { requireActiveProfile } from "@/lib/auth/session";
+import { withUserDb } from "@/lib/supabase/with-db";
 
 const sessionPayloadSchema = z
   .object({
@@ -17,18 +18,20 @@ const sessionPayloadSchema = z
   .strict();
 
 function createRouteSupabaseClient(request: NextRequest, response: NextResponse) {
-  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
+  return withUserDb(
+    createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        }
       }
-    }
-  });
+    })
+  );
 }
 
 export async function POST(request: NextRequest) {

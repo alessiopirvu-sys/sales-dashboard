@@ -11,3 +11,6 @@ package-lock.json
 .DS_Store
 test-results
 tsconfig.tsbuildinfo
+.env.migration
+*.dump
+backups/
